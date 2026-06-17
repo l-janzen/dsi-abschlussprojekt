@@ -1,5 +1,9 @@
+#ist dafür da, damit ich die App schnell auf Windows oder Mac öffne
 #streamlit run C:\Users\haanh\PyCharmMiscProject\Abschluss\V2\Streamlit_Hypertonie_V2.py
-#streamlit run "/Users/haanhtran/Documents/Data Sciencetist/Abschlussprojekt/Python_Streamlit/Abschluss/Streamlit_Hypertonie.py"
+#streamlit run "/Users/haanhtran/Documents/Python/dsi-abschlussprojekt/03_dashboard_app/V2/Streamlit_Hypertonie_V2.py"
+
+
+
 #docs.streamlit.io
 #https://docs.streamlit.io/develop/quick-reference/cheat-sheet
 #framework
