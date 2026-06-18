@@ -1,5 +1,6 @@
 #ist dafür da, damit ich die App schnell auf Windows oder Mac öffne
-#streamlit run C:\Users\haanh\PyCharmMiscProject\Abschluss\V2\Streamlit_Hypertonie_V2.py
+#cd C:\Users\haanh\.vscode\DSI_Abschlussprojekt\dsi-abschlussprojekt
+#streamlit run .\03_dashboard_app\V2\Streamlit_Hypertonie_V2.py
 #streamlit run "/Users/haanhtran/Documents/Python/dsi-abschlussprojekt/03_dashboard_app/V2/Streamlit_Hypertonie_V2.py"
 
 
