@@ -1,4 +1,6 @@
 import streamlit as st
+import altair as alt
+import pandas as pd
 
 
 st.set_page_config(
@@ -11,6 +13,7 @@ st.set_page_config(
                  "Autor: Ludmila Janzen, Mahshid Ghasempour, Ha Anh Tran"
     }
 )
-        
 
-st.write("hallo")#
+
+st.title("Hallo")
+

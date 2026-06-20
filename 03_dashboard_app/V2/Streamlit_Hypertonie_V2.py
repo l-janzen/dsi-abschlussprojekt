@@ -34,7 +34,7 @@ st.sidebar.write("Text Seitenleiste")
 
 #Überschrift
 st.title("Risiko auf Hypertonie")
-st.subheader("Informationen zur App :woman_health_worker: :man_health_worker:")
+st.subheader(":woman_health_worker: :man_health_worker: Informationen zur App ")
 st.write(
     "Diese App dient dazu, das Bewusstsein für die hohe Verbreitung von Hypertonie (Bluthochdruck) zu"
     "stärken und das individuelle Risiko bzw. den Grad einer möglichen Hypertonie einzuschätzen.\n"
