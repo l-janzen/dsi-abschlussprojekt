@@ -15,6 +15,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from streamlit_javascript import st_javascript
+
+
 
 #Name der App, Stil, Menu Leiste
 st.set_page_config(
@@ -31,7 +34,16 @@ st.set_page_config(
 
 #Überschrift
 st.title("Risiko auf Hypertonie")
-st.image(r".\03_dashboard_app\V2\Image\ChatGPT Image 20. Juni 2026, 23_10_12.png")
+
+theme = st_javascript("""
+window.matchMedia('(prefers-color-scheme: dark)').matches
+""")
+if theme:
+    st.image(r".\03_dashboard_app\V2\Image\ChatGPT Image 20. Juni 2026, 23_10_12.png")
+    
+else:
+    st.image(r".\03_dashboard_app\V2\Image\ChatGPT Image 20. Juni 2026, 23_10_17.png")
+
 
 
 
