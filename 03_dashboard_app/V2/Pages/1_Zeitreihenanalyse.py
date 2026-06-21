@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import altair as alt
+import re
+
 
 
 st.set_page_config(
@@ -30,27 +32,61 @@ def pill_list(option):
     return item_list
 
 #helps with creating chart with different y values
-def create_chart(df, selected_options, x_axis = "timestamp", y_axis = "Wert", serie ="Serie"):
-    x_axis = x_axis + ":T"
+def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x_type = "T", y_axis = "Wert", y_scale = False, serie ="Serie", custom_labels = False, sort = [], show_legend=False):
+    x_axis = x_axis + ":" + x_type
     y_axis = y_axis
     serie = serie
-    return (
-        alt.Chart(df)
-        .transform_fold(
-            pill_list(selected_options),
-            as_= [serie ,y_axis]
+    if custom_labels == False:
+        return (
+            alt.Chart(df)
+            .transform_fold(
+                pill_list(selected_options),
+                as_= [serie ,y_axis]
+            )
+            .mark_line()
+            .encode(
+                x= alt.X( x_axis, 
+                         title= x_name,
+                         scale=alt.Scale(zero=False)
+                        ),
+                y= alt.Y(
+                    y_axis + ":Q",
+                    scale=alt.Scale( zero = False)
+                ),
+                color= alt.Color(
+                        serie + ":N",
+                        legend=None if not show_legend else alt.Legend()
+                    ),
+                
+                tooltip=[x_axis, serie + ":N", y_axis+ ":Q"],
+                
+            )
+            .interactive()
         )
-        .mark_line()
-        .encode(
-            x= x_axis,
-            y=y_axis + ":Q",
-            color= serie + ":N",
-            tooltip=[x_axis, serie + ":N", y_axis+ ":Q"]
+    else:
+        expr = " : ".join(
+            [f"datum.{serie} == '{k}' ? '{v}'"
+            for k, v in custom_labels.items()]
+            ) + f" : datum.{serie}"
+        return (
+            alt.Chart(df)
+            .transform_fold(
+                pill_list(selected_options),
+                as_= [serie ,y_axis]
+            )
+            .transform_calculate(SerieLabel=expr)
+            .mark_line()
+            .encode(
+                x= alt.X( x_axis, title= x_name ),
+                y=alt.Y(
+                    y_axis + ":Q",
+                    scale=alt.Scale( zero = False)
+                ),
+                color= alt.Color("SerieLabel:N", title=serie,sort= sort ),
+                tooltip=[x_axis, "SerieLabel:N", y_axis+ ":Q"]
+            )
+            .interactive()
         )
-        .interactive()
-    )
-
-
 
 #hilft ob ein stock ausgewählt wurde
 def selector(selected_option):
@@ -81,106 +117,49 @@ def load_data2():
 data_country = load_data2()
 df_country = data_country.copy()
 
+@st.cache_data
+def load_data3():
+    return  pd.read_csv(r"..\dsi-abschlussprojekt\01_public_health_analysis\data\raw\death-rate-from-hypertensive-heart-disease-who-ghe-age-standardized.csv", 
+    parse_dates=["Year"],
+    date_format="%Y"
+    )
+data_stirb = load_data3()
+df_stirb = data_stirb.copy()
+
+
+
+
+
+
 ################################################################################
 st.title("Entwicklung von Hypertonie")
 st.subheader(":hearts:")
-#####
-
-#dummy frame für die Zeitfilterung
-np.random.seed(42)
-data = pd.DataFrame({
-    "timestamp": pd.date_range("2025-01-01", periods=2000, freq="D"),
-    "value a": np.random.randn(2000).cumsum(),
-    "value b" : np.random.randn(2000).cumsum()
-})
-
-
-df = pd.DataFrame({
-    "timestamp": pd.date_range("2025-01-01", periods=2000, freq="D"),
-    "value a": np.random.randn(2000).cumsum(),
-    "value b" : np.random.randn(2000).cumsum()
-})
+################################################################################
+st.header("Deutschland Hypertonie :alarm_clock:")
 
 
 
-st.write(df_hyper_year)
+
+
+
+##################################################
 #schaut nach min und max Datum
-first_date = df["timestamp"].min().to_pydatetime()
-last_date = df["timestamp"].max().to_pydatetime()
 
 #schaut für df_hyper
 
 first_date_h = df_hyper_year["Year"].min().to_pydatetime()
 last_date_h = df_hyper_year["Year"].max().to_pydatetime()
 
-#df_country
-first_date_c = df_country["Year"].min().to_pydatetime()
-last_date_c = df_country["Year"].max().to_pydatetime()
-
-
-##########################################
-
-st.sidebar.subheader("Filtereinstellung")
-st.sidebar.write("Hier kannst du die Graphen filtern")
-
-#fügt die Achsenamen in die Seitenleiste als pills und filtert duplikate
-selected_options = st.sidebar.pills("Auswahl", data.columns[1:].drop_duplicates(), selection_mode ="multi")
-
-
-#Geschlechtfilterung
-
-selected_gender = st.sidebar.pills("Auswahl Geschlecht", data_year.columns[3:6].drop_duplicates(), selection_mode ="multi")
-
-#Länderfilterung
-selected_country = st.sidebar.pills("Auswahl Land", data_country.iloc[:,1].drop_duplicates(), selection_mode ="multi")
-
-
-filtered_country = df_country[data_country.iloc[:,1].isin(selected_country)]
 
 
 
-#################################################
-#Zeiteinstelllung
 
 
 
-#with st.sidebar.popover("Zeit-Einstellung"):
-#    date_range = (first_date, last_date)
-#    if selected_options:
-#        selected_date_range = st.slider(
-#            "Wähle deinen Zeitraum",
-#            min_value = first_date,
-#            max_value = last_date,
-#            value = date_range , #setzt den Zeitrahmen auf dem vollen Zeitraum
-#            format = "YYYY-MM-DD",
-#            step = pd.Timedelta(weeks=1).to_pytimedelta(), #stellt sicher, dass der slider in 1 Wochen schritten arbeitet
-#           key = "hallo1"
-#        )
-#        teste = False
-#    else:
-#        selected_date_range = False
-#        teste = True
-
-
-test_value = selector(selected_options)
-
-
-date_range = (first_date, last_date)
-selected_date_range = st.sidebar.slider(
-    "Wähle deinen Zeitraum",
-    min_value = first_date,
-    max_value = last_date,
-    value = date_range , #setzt den Zeitrahmen auf dem vollen Zeitraum
-    format = "YYYY-MM-DD",
-    step = pd.Timedelta(weeks=1).to_pytimedelta(), #stellt sicher, dass der slider in 1 Wochen schritten arbeitet
-    disabled = test_value,
-    key = "hallo3"
-)
 
 ###############################
 #schaut ob eine Pill ausgewählt wird
-pick_gender = selector(selected_gender)
-
+#pick_gender = selector(selected_gender)
 
 #Zeitfilterung
 
@@ -189,16 +168,187 @@ years = pd.date_range(
     last_date_h,
     freq="YS"  # Year Start
 )
+#############################
+#An dieser Stelle kommen die Graphen
+#Funktionen, wie Zeitfilterung müssen Sachen machen bevor Grafik dargestellt wird
+zeit_container = st.container()
 
-date_range_h = (first_date_h, last_date_h)
-selected_date_range_h = st.sidebar.select_slider(
-    "Wähle deinen Zeitraum",
-    options=years,
-    format_func=lambda x: x.strftime("%Y"),
-    value=[years[0], years[-1] ],
-    disabled = pick_gender,
-    key = "hyper_year_range"
+################################
+#erstellt Spalten
+
+main_col, filter_col = st.columns(
+    [5, 1],
+    gap = "medium"
 )
+
+
+
+
+##########################################
+#Seiteneliste
+with filter_col:
+    st.write("#### Thema der Graphen")
+    st.write("Hier kannst du das Thema der Graphen ändern.")
+
+    theme = st.radio("Thema", ["Streamlit", "Altair"])
+    st.write("Du hast:", "_"+ theme + "_", "ausgewählt.")
+    if theme == "Streamlit":
+        chart_theme = "streamlit"
+    else:
+        chart_theme = None
+
+
+
+
+#############################
+#widget für die Zeitfilterung
+with filter_col:
+    st.write("#### Zeitfilterung")
+    st.write("Hier kannst du den Zeitraum ändern")
+    with st.popover("Zeit-Einstellung"):
+        date_range_h = (first_date_h, last_date_h)
+
+        selected_date_range_h = st.select_slider(
+            "Wähle deinen Zeitraum",
+            options=years,
+            format_func=lambda x: x.strftime("%Y"),
+            value=[years[0], years[-1] ],
+            #disabled = pick_gender,
+            key = "hyper_year_range"
+        )
+
+
+################################################
+#Erstellung Graphen
+#Tab Navigation
+with main_col:
+    tab3, tab4, tab_stirb, tab_relation = st.tabs(
+        ["Prävalenz bei den Geschlechtern", "Geschlechterdifferenz", "Sterblichkeit", "Beziehung zwischen Prävalenz und Sterblichkeit"]
+)
+
+###########################
+#dic um spaltennamen zu ändern
+custom_labels = {
+    "hypertension_women": "Frau",
+    "hypertension_men": "Mann",
+    "hypertension_prevalence": "Gesamt"
+}
+#erstellt eine Liste von den neuen Spaltennamen
+columns = data_year.columns[3:6].drop_duplicates()
+new_columns = [custom_labels.get(col, col) for col in columns]
+
+
+
+##############################
+with zeit_container:
+    with tab3:
+        st.subheader("Prävalenz von Hypertonie von Deutschen (30 - 79 Jahren)")
+        #Geschlechtfilterung erstellt pills
+
+        selected_gender = st.pills("Auswahl Geschlecht", new_columns, selection_mode ="multi",default = "Gesamt", key ="gender_pill")
+
+        gender_list = []
+        for items in selected_gender:
+            if items == "Gesamt":
+                gender_list.append("hypertension_prevalence")
+            if items == "Mann":
+                gender_list.append("hypertension_men")
+            if items == "Frau":
+                gender_list.append("hypertension_women")
+
+
+        ##########################################
+        #Daterange Implementierung für selected gender
+        # ändert auch df
+
+        if selected_gender:
+            df_hyper_year = df_hyper_year[
+                (df_hyper_year["Year"]>=selected_date_range_h[0]) &
+                (df_hyper_year["Year"]<=selected_date_range_h[1])
+            ]
+
+
+        if selected_gender:
+            chart_hyper = create_chart(df_hyper_year, gender_list, x_axis = "Year", y_axis = "Prävalenz", serie ="Geschlecht", custom_labels=custom_labels, sort =["Gesamt"], show_legend= True)
+            chart_hyper = chart_hyper.mark_circle(size=80) + chart_hyper
+            st.altair_chart(chart_hyper, theme = chart_theme, use_container_width=True)
+
+        else:
+            st.subheader("🚨")
+            st.warning("Bitte wähle ein Geschlecht aus, um fortzufahren.")
+
+
+        st.write("Hier kann ein Text kommen. tab3")
+
+with tab4:
+    st.subheader("Geschlechterdifferenz bei Hypertonie in DEU")
+    chart_gap = create_chart(df_hyper_year, ["gender_gap_men_minus_women"], x_axis = "Year", y_axis = "Prävalenz", serie ="Serie")
+    chart_gap = chart_gap.mark_circle(size=80) + chart_gap
+    st.altair_chart(chart_gap, theme = chart_theme, use_container_width=True)
+
+with tab_stirb:
+    st.subheader("Sterblichkeit bei Hypertonie in DEU")
+    chart_stirb = create_chart(df_hyper_year, ["hypertensive_heart_disease_death_rate"], x_axis = "Year", y_axis = "Sterblichkeit", serie ="Hallo")
+    chart_stirb = chart_stirb.mark_circle(size=80) + chart_stirb
+    st.altair_chart(chart_stirb, theme = chart_theme, use_container_width=True)
+
+with tab_relation:
+    st.subheader("Beziehung zwischen Prävalenz und Sterblichkeit")
+    chart_relation = create_chart(df_hyper_year, ["hypertensive_heart_disease_death_rate"], x_axis = "hypertension_prevalence", x_name = "Hypertonie (%)", x_type= "Q" , y_axis = "Sterblichkeit", serie ="Serie")
+    chart_relation = chart_relation.mark_circle(size=80) 
+    st.altair_chart(chart_relation, theme = chart_theme, use_container_width=True)
+
+if st.toggle("Dataframe anzeigen"):
+    st.dataframe(df_hyper_year)
+
+
+
+#################################################################
+
+
+
+
+st.header("Zusammenfassung für DE")
+
+
+st.write("Dummy Text")
+
+
+
+
+#############################################################
+
+
+st.header("Zusatz: Länder Hypertonie")
+
+###############################
+#erstellt Spalten
+
+
+main_col_c, filter_col_c = st.columns([5,1], gap="medium")
+
+
+#macht das die Graphen hier angezeigt werden
+country_container = st.container()
+
+
+##############################################################
+#Start der Länderfilterung
+#df_country schaut nach min und max Datum
+first_date_c = df_country["Year"].min().to_pydatetime()
+last_date_c = df_country["Year"].max().to_pydatetime()
+
+
+#Länderfilterung
+
+
+st.write("Hier kannst du nach Ländern filtern")
+selected_country = st.pills("Länderauswahl", data_country.iloc[:,1].dropna().drop_duplicates().sort_values(), selection_mode ="multi")
+
+
+filtered_country = df_country[data_country.iloc[:,1].isin(selected_country)]
+
+filtered_stirb = df_stirb[df_stirb.iloc[:,1].isin(selected_country)]
 
 ###############################
 #schaut ob eine Pill ausgewählt wird
@@ -212,37 +362,30 @@ years = pd.date_range(
     last_date_c,
     freq="YS"  # Year Start
 )
+with filter_col_c:
+    st.write("#### Thema der Graphen")
+    st.write("Hier kannst du das Thema der Graphen ändern.")
 
-date_range_c = (first_date_c, last_date_c)
-selected_date_range_c = st.sidebar.select_slider(
-    "Wähle deinen Zeitraum",
-    options=years,
-    format_func=lambda x: x.strftime("%Y"),
-    value=[years[0], years[-1] ],
-    disabled = pick_country,
-    key = "country_year_range"
-)
-
-st.write("country")
-st.write(selected_date_range_c)
-st.write(filtered_country)
-##########################################
-
-
-#Daterange Implementierung
-if selected_options:
-    df = df[
-        (df["timestamp"]>=selected_date_range[0]) &
-        (df["timestamp"]<=selected_date_range[1])
-    ]
+    theme_c = st.radio("Thema", ["Streamlit", "Altair"], key =("theme2"))
+    st.write("Du hast:", "_"+ theme_c + "_", "ausgewählt.")
+    if theme_c == "Streamlit":
+        chart_theme = "streamlit"
+    else:
+        chart_theme = None
+    
+    with st.popover("Zeit-Einstellung"):
+        date_range_c = (first_date_c, last_date_c)
+        if selected_country:
+            selected_date_range_c = st.select_slider(
+                "Wähle deinen Zeitraum",
+                options=years,
+                format_func=lambda x: x.strftime("%Y"),
+                value=[years[0], years[-1] ],
+                disabled = pick_country,
+                key = "country_year_range"
+            )
 
 
-#Daterange Implementierung für selected gender
-if selected_gender:
-    df_hyper_year = df_hyper_year[
-        (df_hyper_year["Year"]>=selected_date_range_h[0]) &
-        (df_hyper_year["Year"]<=selected_date_range_h[1])
-    ]
 
 #Daterange Implementierung für selected country
 
@@ -251,75 +394,24 @@ if selected_country:
         (filtered_country["Year"]>=selected_date_range_c[0]) &
         (filtered_country["Year"]<=selected_date_range_c[1])
     ]
-
-##################################################
-
-
-st.write("hallo")
-spalte_1, spalte_2 = st.columns([1,2])
-with spalte_1:
-    options = st.multiselect(
-        "What are your favorite colors?",
-        ["Green", "Yellow", "Red", "Blue"],
-        default=["Yellow", "Red"],
-    )
-
-st.write("You selected:", options)
-for items in options:
-    if items == "Green":
-        st.write("Green is in the seleceted item")
-
-st.subheader("Zeitspanne :alarm_clock:")
-if selected_date_range:
-    st.write(selected_date_range, selected_date_range[0], selected_date_range[1])
-
-
-################################################
-
-
-if not test_value:
-    chart = create_chart(df, selected_options)
-
-    tab1, tab2 = st.tabs(
-        ["Streamlit theme (default)", "Altair native theme"]
-    )
-
-    with tab1:
-        st.altair_chart(chart, theme="streamlit", use_container_width=True)
-
-    with tab2:
-        st.altair_chart(chart, theme=None, use_container_width=True)
-else:
-    st.write("Wähle in der Seitenleiste ein Land aus")
+    filtered_stirb = filtered_stirb[
+        (filtered_stirb["Year"]>=selected_date_range_c[0]) &
+        (filtered_stirb["Year"]<=selected_date_range_c[1])
+    ]
 
 
 
-if not pick_gender:
-    chart_hyper = create_chart(df_hyper_year, selected_gender, x_axis = "Year", y_axis = "Prävalenz", serie ="Serie")
 
-    tab3, tab4 = st.tabs(
-        ["Streamlit theme (default)", "Altair native theme"]
-    )
-    chart_hyper = chart_hyper.mark_circle(size=80) + chart_hyper
-    with tab3:
-        st.altair_chart(chart_hyper, theme="streamlit", use_container_width=True)
-
-    with tab4:
-        st.altair_chart(chart_hyper, theme=None, use_container_width=True)
-
-    
-else:
-    st.write("Wähle ein Geschlecht aus")
 
 
 
 if not pick_country:
     df_merge_country = None
+    df_merge_stirb = None
     for country in selected_country:
         country_data = filtered_country[filtered_country.iloc[:,1] == country]
 
         if df_merge_country is None:
-            st.write(country)
             df_merge_country = country_data[["Year", "Prevalence of hypertension in adults aged 30-79"]]
             df_merge_country["Jahr"]=df_merge_country["Year"]
             df_merge_country = df_merge_country.rename(columns={"Prevalence of hypertension in adults aged 30-79": country})
@@ -335,28 +427,82 @@ if not pick_country:
             country_data = country_data[["Year", "Prevalence of hypertension in adults aged 30-79"]]
             country_data = country_data.rename(columns={"Prevalence of hypertension in adults aged 30-79": country})
             df_merge_country = df_merge_country.join(country_data.set_index("Year"),how="inner")
+########################################
+#Sterblichkeit
+        if bool(re.search(r"WHO", country, re.IGNORECASE)):
+            continue
+        stirb = filtered_stirb[filtered_stirb.iloc[:,1] == country]
+        
+
+        if df_merge_stirb is None:
+            df_merge_stirb = stirb[["Year", "Age-standardized death rate from hypertensive heart disease among both sexes"]]
+            df_merge_stirb["Jahr"]=df_merge_stirb["Year"]
+            df_merge_stirb = df_merge_stirb.rename(columns={"Age-standardized death rate from hypertensive heart disease among both sexes": country})
+
+        elif df_merge_stirb.index.name != "Year":
+
+            stirb = stirb[["Year", "Age-standardized death rate from hypertensive heart disease among both sexes"]]
+            stirb = stirb.rename(columns={"Age-standardized death rate from hypertensive heart disease among both sexes": country})
+            df_merge_stirb = df_merge_stirb.set_index("Year").join(stirb.set_index("Year"),how="inner")
+
+        else:
+
+            stirb = stirb[["Year", "Age-standardized death rate from hypertensive heart disease among both sexes"]]
+            stirb = stirb.rename(columns={"Age-standardized death rate from hypertensive heart disease among both sexes": country})
+            df_merge_stirb = df_merge_stirb.join(stirb.set_index("Year"),how="inner")
 
 
 
 
-    tab5, tab6 = st.tabs(
-        ["Streamlit theme (default)", "Altair native theme"]
-    )
-    chart_country = create_chart(df_merge_country, selected_country, x_axis = "Jahr", y_axis = "Prävalenz", serie ="Länder")
-    with tab5:
-        st.altair_chart(chart_country, theme="streamlit", use_container_width=True)
+    with country_container:
+        with main_col_c:
+            tab5, tab6 = st.tabs(
+                ["Prävalenz", "Sterblichkeit"]
+            )
+            chart_country = create_chart(df_merge_country, selected_country, x_axis = "Jahr", y_axis = "Prävalenz", serie ="Länder", show_legend= True)
 
-    with tab6:
-        st.altair_chart(chart_country, theme=None, use_container_width=True)
+
+
+            with tab5:
+                st.altair_chart(chart_country, theme=chart_theme, use_container_width=True)
+                if st.toggle("Dataframe Prävalenz anzeigen"):
+                    try:
+                        df_merge_stirb.pop("Year")
+                    except:
+                        l = 1
+                    cols = df_merge_country.columns.tolist()
+                    cols.remove("Jahr")
+                    cols.insert(0, "Jahr")
+
+                    df_merge_country = df_merge_country[cols]
+                    st.dataframe(df_merge_country)
+
+            chart_stirb = create_chart(df_merge_stirb, selected_country, x_axis = "Jahr", y_axis = "Sterblichkeit", serie ="Länder", show_legend= True)
+            with tab6:
+                st.altair_chart(chart_stirb, theme=chart_theme, use_container_width=True)
+                st.caption("In den Jahren zwischen 1990 - 2000 gibt es keine Daten")
+                st.caption("Für die WHO-Pillen gibt es keine Daten für die Sterblichkeit")
+
+                if st.toggle("Dataframe Sterblichkeit anzeigen"):
+                    if df_merge_stirb is None:
+                        st.error("Für die WHO-Pillen gibt es keine Daten für die Sterblichkeit")
+                        st.stop()
+                    try:
+                        df_merge_stirb.pop("Year")
+                    except:
+                        l = 1
+                    cols = df_merge_stirb.columns.tolist()
+                    cols.remove("Jahr")
+                    cols.insert(0, "Jahr")
+
+                    df_merge_stirb = df_merge_stirb[cols]
+                    st.dataframe(df_merge_stirb)
 
     
 else:
-    st.write("Wähle ein Land aus")
+    with country_container:
+        with main_col_c:
+            st.subheader("🚨")
+            st.warning("Bitte wähle ein Land unten aus, um fortzufahren.")
 
 
-#################################################################
-
-
-
-
-st.subheader("Zusammenfassung")

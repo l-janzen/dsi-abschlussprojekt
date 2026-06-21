@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 st.title("Wie hoch ist das Risiko auf Hypertonie?")
-
+st.subheader("Hier können Sie anhand ihrer Daten ihr Risiko berechnen lassen.")
 
 
 
