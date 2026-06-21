@@ -105,6 +105,7 @@ selected_date_range = st.sidebar.slider(
     disabled = test_value,
     key = "hallo3"
 )
+trt = st.container()
 
 #Daterange Implementierung
 if selected_options:
@@ -113,13 +114,25 @@ if selected_options:
         (df["timestamp"]<=selected_date_range[1])
     ]
 
+
+
+st.button("gaga")
+
+
+chart = create_chart(df, selected_options)
+with trt:
+    tab5, tab6 = st.tabs(
+        ["Hallo", "sss"])
+    with tab5:
+        st.altair_chart(chart, theme="streamlit", use_container_width=True)
+
+
+tab1, tab2 = st.tabs(
+    ["Streamlit theme (default)", "Altair native theme"])
+    
+
 if not test_value:
     chart = create_chart(df, selected_options)
-
-    tab1, tab2 = st.tabs(
-        ["Streamlit theme (default)", "Altair native theme"]
-    )
-
     with tab1:
         st.altair_chart(chart, theme="streamlit", use_container_width=True)
 
@@ -127,3 +140,4 @@ if not test_value:
         st.altair_chart(chart, theme=None, use_container_width=True)
 else:
     st.write("Wähle in der Seitenleiste eine Option aus")
+

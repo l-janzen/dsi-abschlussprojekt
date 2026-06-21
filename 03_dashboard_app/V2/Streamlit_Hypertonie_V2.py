@@ -28,12 +28,13 @@ st.set_page_config(
     }
 )
 
-#Seitenleiste
-st.sidebar.subheader("Seitenleiste")
-st.sidebar.write("Text Seitenleiste")
 
 #Überschrift
 st.title("Risiko auf Hypertonie")
+st.image(r".\03_dashboard_app\V2\Image\ChatGPT Image 20. Juni 2026, 23_10_12.png")
+
+
+
 st.subheader(":woman_health_worker: :man_health_worker: Informationen zur App ")
 st.write(
     "Diese App dient dazu, das Bewusstsein für die hohe Verbreitung von Hypertonie (Bluthochdruck) zu"
@@ -55,45 +56,6 @@ st.write(
     "\n Quelle : https://www.stiftung-gesundheitswissen.de/hypertonie/allgemeines"
 )
 
-st.write(1234)
-st.write(
-    pd.DataFrame(
-        {
-            "first column": [1, 2, 3, 4],
-            "second column": [10, 20, 30, 40],
-        }
-    )
-)
-
-data_frame = pd.DataFrame(
-    {"a": [4, 5, 6],
-     "b": [7, 8, 9],
-     "c": [10, 11, 12]},
-    index=[1, 2, 3])
-
-st.write("1 + 1 = ", 2)
-st.write("Below is a DataFrame:", data_frame, "Above is a dataframe.")
-
-erste_spalte, zweite_spalte = st.columns([1, 1])
-with erste_spalte:
-    fig, ax = plt.subplots()
-    fig.set_size_inches(8, 4)
-    data_frame.plot(ax=ax)
-    plt.xlabel("Index")
-    plt.ylabel("Wert")
-    plt.title("DataFrame-Plot")
-    st.pyplot(fig)
-
-chart_data = pd.DataFrame(
-    np.random.randn(20, 3),
-    columns=['a', 'b', 'c'])
-
-st.line_chart(chart_data)
-
-dsdd = st.button(label="Hallo")
-dsd3 = st.button(label="Hallodsd")
-st.write(dsdd)
-st.write(dsd3)
 
 st.page_link(
     "pages/1_Zeitreihenanalyse.py",
