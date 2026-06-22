@@ -1,5 +1,6 @@
 import warnings
 import sys
+from pathlib import Path
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -7,6 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import altair as alt
 import re
+
+BASE_DIR = Path(__file__).resolve().parents[3]
 
 
 
@@ -101,7 +104,8 @@ def selector(selected_option):
 ##Data loading
 @st.cache_data
 def load_data():
-    return  pd.read_csv(r"..\dsi-abschlussprojekt\01_public_health_analysis\data\processed\germany_hypertension_public_health_2000_2019.csv", 
+    data_path = BASE_DIR / "01_public_health_analysis" / "data" / "processed" / "germany_hypertension_public_health_2000_2019.csv"
+    return  pd.read_csv(data_path, 
     parse_dates=["Year"],
     date_format="%Y"
     )
@@ -110,7 +114,8 @@ df_hyper_year = data_year.copy()
 
 @st.cache_data
 def load_data2():
-    return  pd.read_csv(r"..\dsi-abschlussprojekt\01_public_health_analysis\data\raw\hypertension-adults-30-79.csv", 
+    data_path = BASE_DIR / "01_public_health_analysis" / "data" / "raw" / "hypertension-adults-30-79.csv"
+    return  pd.read_csv(data_path, 
     parse_dates=["Year"],
     date_format="%Y"
     )
@@ -119,7 +124,8 @@ df_country = data_country.copy()
 
 @st.cache_data
 def load_data3():
-    return  pd.read_csv(r"..\dsi-abschlussprojekt\01_public_health_analysis\data\raw\death-rate-from-hypertensive-heart-disease-who-ghe-age-standardized.csv", 
+    data_path = BASE_DIR / "01_public_health_analysis" / "data" / "raw" / "death-rate-from-hypertensive-heart-disease-who-ghe-age-standardized.csv"
+    return  pd.read_csv(data_path, 
     parse_dates=["Year"],
     date_format="%Y"
     )

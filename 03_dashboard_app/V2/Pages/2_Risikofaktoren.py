@@ -1,11 +1,14 @@
 import warnings
 import sys
+from pathlib import Path
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import altair as alt
+
+BASE_DIR = Path(__file__).resolve().parents[3]
 
 
 st.set_page_config(
@@ -98,7 +101,8 @@ def selector(selected_option):
 ##Data loading
 @st.cache_data
 def load_data():
-    return  pd.read_csv(r".\02_ml_analysis\notebooks\nhanes_cleand.csv"
+    data_path = BASE_DIR / "02_ml_analysis" / "notebooks" / "nhanes_cleand.csv"
+    return  pd.read_csv(data_path
     )
 
 data_nhanes = load_data()

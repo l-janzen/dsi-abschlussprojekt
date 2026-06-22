@@ -10,12 +10,15 @@
 #framework
 import warnings
 import sys
+from pathlib import Path
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from streamlit_javascript import st_javascript
+
+BASE_DIR = Path(__file__).resolve().parent
 
 
 
@@ -39,10 +42,10 @@ theme = st_javascript("""
 window.matchMedia('(prefers-color-scheme: dark)').matches
 """)
 if theme:
-    st.image(r".\03_dashboard_app\V2\Image\ChatGPT Image 20. Juni 2026, 23_10_12.png")
+    st.image(str(BASE_DIR / "Image" / "ChatGPT Image 20. Juni 2026, 23_10_12.png"))
     
 else:
-    st.image(r".\03_dashboard_app\V2\Image\ChatGPT Image 20. Juni 2026, 23_10_17.png")
+    st.image(str(BASE_DIR / "Image" / "ChatGPT Image 20. Juni 2026, 23_10_17.png"))
 
 
 
@@ -76,11 +79,11 @@ st.subheader("Wie ist Diagnose?")
 
 
 st.page_link(
-    "pages/1_Zeitreihenanalyse.py",
+    "Pages/1_Zeitreihenanalyse.py",
     label="Zeitreihenanalyse",
     icon="🏠"
 )
 
 plumb = st.button(label="page 2")
 if plumb == True:
-    st.page_link("pages/2_Risikofaktoren.py", label="Page 1", icon="1️⃣")
+    st.page_link("Pages/2_Risikofaktoren.py", label="Page 1", icon="1️⃣")
