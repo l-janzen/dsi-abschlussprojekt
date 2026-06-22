@@ -68,6 +68,12 @@ st.write(
     "\n Quelle : https://www.stiftung-gesundheitswissen.de/hypertonie/allgemeines"
 )
 
+st.subheader("Was sind die Nachteile von Hypertonie?")
+
+st.subheader("Wie ist Diagnose?")
+
+
+
 
 st.page_link(
     "pages/1_Zeitreihenanalyse.py",

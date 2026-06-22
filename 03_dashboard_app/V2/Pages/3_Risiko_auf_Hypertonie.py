@@ -104,3 +104,10 @@ with spalte_3:
     st.slider("körperlicher Aktivität", min_value = 0, max_value = 100, value = 100)
 
 st.write(st.session_state)
+
+
+
+
+
+
+

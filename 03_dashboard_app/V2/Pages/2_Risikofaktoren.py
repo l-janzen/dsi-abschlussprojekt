@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import altair as alt
 
+
 st.set_page_config(
     page_title="Risikofaktor",
     page_icon = ":hearts:",
@@ -18,35 +19,8 @@ st.set_page_config(
     }
 )
 
+
 ##############
-def selector(selected_option):
-    if selected_option:
-        return False
-    else:
-        selected_option = False
-        return  True
-
-
-def create_chart(df, selected_options, x_axis = "timestamp", y_axis = "Wert", serie ="Serie"):
-    x_axis = x_axis + ":T"
-    y_axis = y_axis
-    serie = serie
-    return (
-        alt.Chart(df)
-        .transform_fold(
-            pill_list(selected_options),
-            as_= [serie ,y_axis]
-        )
-        .mark_line()
-        .encode(
-            x= x_axis,
-            y=y_axis + ":Q",
-            color= serie + ":N",
-            tooltip=[x_axis, serie + ":N", y_axis+ ":Q"]
-        )
-        .interactive()
-    )
-
 #helps with creating pills
 def pill_list(option):
     item_list = []
@@ -54,9 +28,94 @@ def pill_list(option):
         item_list.append(items)
     return item_list
 
+#helps with creating chart with different y values
+def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x_type = "T", y_axis = "Wert", y_scale = False, serie ="Serie", custom_labels = False, sort = [], show_legend=False):
+    x_axis = x_axis + ":" + x_type
+    y_axis = y_axis
+    serie = serie
+    if custom_labels == False:
+        return (
+            alt.Chart(df)
+            .transform_fold(
+                pill_list(selected_options),
+                as_= [serie ,y_axis]
+            )
+            .mark_line()
+            .encode(
+                x= alt.X( x_axis, 
+                         title= x_name,
+                         scale=alt.Scale(zero=False)
+                        ),
+                y= alt.Y(
+                    y_axis + ":Q",
+                    scale=alt.Scale( zero = False)
+                ),
+                color= alt.Color(
+                        serie + ":N",
+                        legend=None if not show_legend else alt.Legend()
+                    ),
+                
+                tooltip=[x_axis, serie + ":N", y_axis+ ":Q"],
+                
+            )
+            .interactive()
+        )
+    else:
+        expr = " : ".join(
+            [f"datum.{serie} == '{k}' ? '{v}'"
+            for k, v in custom_labels.items()]
+            ) + f" : datum.{serie}"
+        return (
+            alt.Chart(df)
+            .transform_fold(
+                pill_list(selected_options),
+                as_= [serie ,y_axis]
+            )
+            .transform_calculate(SerieLabel=expr)
+            .mark_line()
+            .encode(
+                x= alt.X( x_axis, title= x_name ),
+                y=alt.Y(
+                    y_axis + ":Q",
+                    scale=alt.Scale( zero = False)
+                ),
+                color= alt.Color("SerieLabel:N", title=serie,sort= sort ),
+                tooltip=[x_axis, "SerieLabel:N", y_axis+ ":Q"]
+            )
+            .interactive()
+        )
+
+#hilft ob ein stock ausgewählt wurde
+def selector(selected_option):
+    if selected_option:
+        return False
+    else:
+        selected_option = False
+        return  True
+
+###################################################
+
+##Data loading
+@st.cache_data
+def load_data():
+    return  pd.read_csv(r".\02_ml_analysis\notebooks\nhanes_cleand.csv"
+    )
+
+data_nhanes = load_data()
+df_nh = data_nhanes.copy()
+
+
+
+
 
 ##############
-st.title("Risikofaktoren")
+st.title("Was fördert Hypertonie")
+
+st.subheader("Körperliche Eigenschaften")
+
+st.subheader("Lebenstil risikofaktro")
+
+st.subheader("Vorerkrankung")
 
 st.write("hallo")
 
@@ -140,4 +199,7 @@ if not test_value:
         st.altair_chart(chart, theme=None, use_container_width=True)
 else:
     st.write("Wähle in der Seitenleiste eine Option aus")
+
+
+st.subheader("Was kann dagegen gemacht werden")
 
