@@ -1,3 +1,8 @@
-from ..function import *
+import sys
+from pathlib import Path
 
-lo()
+sys.path.append(str(Path(__file__).parent.parent))
+
+from function import lo
+
+print(lo())
