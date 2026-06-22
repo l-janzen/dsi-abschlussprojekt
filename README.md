@@ -23,3 +23,19 @@ This repository is structured as a larger project with three separate but connec
   - WHO data: country/year level
   - NHANES data: individual/person level
   - App layer: presentation and interaction
+
+## Run the Streamlit App
+
+Use the launcher script from the project root:
+
+```bash
+python run_dashboard.py
+```
+
+The script is cross-platform and uses the current Python interpreter to start Streamlit with the correct app path.
+
+You can also pass Streamlit options through it, for example:
+
+```bash
+python run_dashboard.py --server.port 8502
+```
