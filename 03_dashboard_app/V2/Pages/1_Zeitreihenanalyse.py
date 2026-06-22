@@ -132,11 +132,12 @@ df_stirb = data_stirb.copy()
 
 
 ################################################################################
-st.title("Entwicklung von Hypertonie")
+st.title("Entwicklung der Hypertonie-Prävalenz")
 st.subheader(":hearts:")
+st.write("Hier bietet sich an zu schreiben, was diese Seite alles zeigen soll oder an Informationen und die Begrifffe wie periodische Prävalenz")
 ################################################################################
-st.header("Deutschland Hypertonie :alarm_clock:")
-
+st.header(":alarm_clock: Hypertonie in Deutschland")
+st.write("Prävalenz, Sterberate und geschlechtspezifische Unterschiede 2000 - 2019")
 
 
 
@@ -149,11 +150,6 @@ st.header("Deutschland Hypertonie :alarm_clock:")
 
 first_date_h = df_hyper_year["Year"].min().to_pydatetime()
 last_date_h = df_hyper_year["Year"].max().to_pydatetime()
-
-
-
-
-
 
 
 
@@ -180,8 +176,6 @@ main_col, filter_col = st.columns(
     [5, 1],
     gap = "medium"
 )
-
-
 
 
 ##########################################
@@ -223,7 +217,7 @@ with filter_col:
 #Tab Navigation
 with main_col:
     tab3, tab4, tab_stirb, tab_relation = st.tabs(
-        ["Prävalenz bei den Geschlechtern", "Geschlechterdifferenz", "Sterblichkeit", "Beziehung zwischen Prävalenz und Sterblichkeit"]
+        ["Prävalenz bei den Geschlechtern", "Geschlechterunterschied", "Sterberate", "Beziehung zwischen Prävalenz und Sterberate"]
 )
 
 ###########################
@@ -242,7 +236,7 @@ new_columns = [custom_labels.get(col, col) for col in columns]
 ##############################
 with zeit_container:
     with tab3:
-        st.subheader("Prävalenz von Hypertonie von Deutschen (30 - 79 Jahren)")
+        st.subheader("Entwicklung der Hypertonie-Prävalenz von Deutschen (30 - 79 Jahren)")
         #Geschlechtfilterung erstellt pills
 
         selected_gender = st.pills("Auswahl Geschlecht", new_columns, selection_mode ="multi",default = "Gesamt", key ="gender_pill")
@@ -269,7 +263,7 @@ with zeit_container:
 
 
         if selected_gender:
-            chart_hyper = create_chart(df_hyper_year, gender_list, x_axis = "Year", y_axis = "Prävalenz", serie ="Geschlecht", custom_labels=custom_labels, sort =["Gesamt"], show_legend= True)
+            chart_hyper = create_chart(df_hyper_year, gender_list, x_axis = "Year", y_axis = "Prävalenz (%)", serie ="Geschlecht", custom_labels=custom_labels, sort =["Gesamt"], show_legend= True)
             chart_hyper = chart_hyper.mark_circle(size=80) + chart_hyper
             st.altair_chart(chart_hyper, theme = chart_theme, use_container_width=True)
 
@@ -281,22 +275,26 @@ with zeit_container:
         st.write("Hier kann ein Text kommen. tab3")
 
 with tab4:
-    st.subheader("Geschlechterdifferenz bei Hypertonie in DEU")
-    chart_gap = create_chart(df_hyper_year, ["gender_gap_men_minus_women"], x_axis = "Year", y_axis = "Prävalenz", serie ="Serie")
+    st.subheader("Geschlechterunterschied bei der Hypertonie-Prävalenz in Deutschland")
+    chart_gap = create_chart(df_hyper_year, ["gender_gap_men_minus_women"], x_axis = "Year", y_axis = "Geschlechterdifferenz in Prozentpunkte", serie ="Serie")
     chart_gap = chart_gap.mark_circle(size=80) + chart_gap
     st.altair_chart(chart_gap, theme = chart_theme, use_container_width=True)
 
 with tab_stirb:
-    st.subheader("Sterblichkeit bei Hypertonie in DEU")
-    chart_stirb = create_chart(df_hyper_year, ["hypertensive_heart_disease_death_rate"], x_axis = "Year", y_axis = "Sterblichkeit", serie ="Hallo")
+    st.subheader("Sterberate bei Deutschen durch eine hypertensive Krankheit")
+    chart_stirb = create_chart(df_hyper_year, ["hypertensive_heart_disease_death_rate"], x_axis = "Year", y_axis = "Sterberate pro 100.000 Einwohner", serie ="Hallo")
     chart_stirb = chart_stirb.mark_circle(size=80) + chart_stirb
     st.altair_chart(chart_stirb, theme = chart_theme, use_container_width=True)
 
 with tab_relation:
-    st.subheader("Beziehung zwischen Prävalenz und Sterblichkeit")
-    chart_relation = create_chart(df_hyper_year, ["hypertensive_heart_disease_death_rate"], x_axis = "hypertension_prevalence", x_name = "Hypertonie (%)", x_type= "Q" , y_axis = "Sterblichkeit", serie ="Serie")
+    st.subheader("Beziehung zwischen Prävalenz und Sterberate")
+    chart_relation = create_chart(df_hyper_year, ["hypertensive_heart_disease_death_rate"], x_axis = "hypertension_prevalence", x_name = "Hypertonie (%)", x_type= "Q" , y_axis = "Sterberate pro 100.000 Einwohner", serie ="Serie")
     chart_relation = chart_relation.mark_circle(size=80) 
     st.altair_chart(chart_relation, theme = chart_theme, use_container_width=True)
+
+    st.write("keinen Trend --> Variablen sind unabhängig")
+
+
 
 if st.toggle("Dataframe anzeigen"):
     st.dataframe(df_hyper_year)
@@ -309,7 +307,7 @@ if st.toggle("Dataframe anzeigen"):
 
 
 st.header("Zusammenfassung für DE")
-
+st.write("Die Hypertonie-Prävalenz ist zwischen ... ")
 
 st.write("Dummy Text")
 
@@ -372,7 +370,8 @@ with filter_col_c:
         chart_theme = "streamlit"
     else:
         chart_theme = None
-    
+    st.write("#### Zeitfilterung")
+    st.write("Hier kannst du den Zeitraum ändern")
     with st.popover("Zeit-Einstellung"):
         date_range_c = (first_date_c, last_date_c)
         if selected_country:
@@ -457,9 +456,9 @@ if not pick_country:
     with country_container:
         with main_col_c:
             tab5, tab6 = st.tabs(
-                ["Prävalenz", "Sterblichkeit"]
+                ["Prävalenz", "Sterberate"]
             )
-            chart_country = create_chart(df_merge_country, selected_country, x_axis = "Jahr", y_axis = "Prävalenz", serie ="Länder", show_legend= True)
+            chart_country = create_chart(df_merge_country, selected_country, x_axis = "Jahr", y_axis = "Prävalenz (%)", serie ="Länder", show_legend= True)
 
 
 
@@ -477,15 +476,15 @@ if not pick_country:
                     df_merge_country = df_merge_country[cols]
                     st.dataframe(df_merge_country)
 
-            chart_stirb = create_chart(df_merge_stirb, selected_country, x_axis = "Jahr", y_axis = "Sterblichkeit", serie ="Länder", show_legend= True)
+            chart_stirb = create_chart(df_merge_stirb, selected_country, x_axis = "Jahr", y_axis = "Sterberate pro 100.000 Einwohner", serie ="Länder", show_legend= True)
             with tab6:
                 st.altair_chart(chart_stirb, theme=chart_theme, use_container_width=True)
                 st.caption("In den Jahren zwischen 1990 - 2000 gibt es keine Daten")
-                st.caption("Für die WHO-Pillen gibt es keine Daten für die Sterblichkeit")
+                st.caption("Für die WHO-Pillen gibt es keine Daten für die Sterberate")
 
-                if st.toggle("Dataframe Sterblichkeit anzeigen"):
+                if st.toggle("Dataframe Sterberate anzeigen"):
                     if df_merge_stirb is None:
-                        st.error("Für die WHO-Pillen gibt es keine Daten für die Sterblichkeit")
+                        st.error("Für die WHO-Pillen gibt es keine Daten für die Sterberate")
                         st.stop()
                     try:
                         df_merge_stirb.pop("Year")

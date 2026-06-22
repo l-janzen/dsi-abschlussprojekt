@@ -56,7 +56,7 @@ def pill_list(option):
 
 
 ##############
-st.title("Risikofaktoren")
+st.title("Was fördert Hypertonie")
 
 st.write("hallo")
 
@@ -140,4 +140,7 @@ if not test_value:
         st.altair_chart(chart, theme=None, use_container_width=True)
 else:
     st.write("Wähle in der Seitenleiste eine Option aus")
+
+
+st.subheader("Was kann dagegen gemacht werden")
 
