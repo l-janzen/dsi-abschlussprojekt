@@ -21,7 +21,7 @@ def pill_list(option):
     return item_list
 
 #helps with creating chart with different y values
-def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x_type = "T", y_axis = "Wert", y_scale = False, serie ="Serie", custom_labels = False, sort = [], show_legend=False):
+def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x_type = "T", y_axis = "Wert", serie ="Serie", custom_labels = False, sort = [], show_legend=False):
     x_axis = x_axis + ":" + x_type
     y_axis = y_axis
     serie = serie
@@ -90,3 +90,63 @@ def lo():
     return "Hello"
 
 ####################################################
+#macht df kompatibel für Altair
+def crosstab_conversion(
+    df,
+    selected_options=None,
+    x_axis="timestamp",
+    y_axis="Wert",
+    serie="Serie"
+):
+    df = df.copy()
+    df.columns = df.columns.astype(str)
+    df = df.reset_index()
+#konvertiert True und False
+    if "1.0" in df.columns:
+        df["ja"] = pd.to_numeric(df["1.0"])
+
+    if "0.0" in df.columns:
+        df["nein"] = pd.to_numeric(df["0.0"])
+#wenn keine Angabe, welche Spalten
+    if selected_options is None:
+        selected_options = [
+            c for c in df.columns
+            if c not in [x_axis, "0.0", "1.0"]
+        ]#wählt die ja und nein aus
+    else:
+        selected_options = pill_list(selected_options)
+
+    return df.melt(
+        id_vars=x_axis,
+        value_vars=selected_options,
+        var_name=serie,
+        value_name=y_axis
+    )
+####################################################
+#einfache Parameter Eingabe für bar
+
+def create_bar_chart(df, x_axis, y_axis  ):
+    return (
+        alt.Chart(df)
+        .mark_bar()
+        .encode(
+            x= x_axis +":N",
+            y= y_axis + ":Q",
+            color= x_axis +":N"
+        )
+        .interactive()
+    )
+
+#einfache Parameter Eingabe für donut
+def create_donut_chart(df, x_axis, y_axis):
+    return (
+    alt.Chart(df)
+    .mark_arc(
+        innerRadius=100
+    )
+    .encode(
+        theta= y_axis+":Q",
+        color= x_axis+":N"
+    )
+)
+
