@@ -125,15 +125,53 @@ def crosstab_conversion(
 ####################################################
 #einfache Parameter Eingabe für bar
 
-def create_bar_chart(df, x_axis, y_axis  ):
+def create_bar_chart(
+    df,
+    x_axis,
+    y_axis,
+    serie=None,
+    x_name=None,
+    y_name=None,
+    show_legend=False,
+    sort=None
+):
+    if x_name is None:
+        x_name = x_axis
+
+    if y_name is None:
+        y_name = y_axis
+
+    if sort is None:
+        sort = []
+
+    encoding = {
+        "x": alt.X(
+            f"{x_axis}:N",
+            title=x_name,
+            sort=sort
+        ),
+        "y": alt.Y(
+            f"{y_axis}:Q",
+            title=y_name
+        )
+    }
+
+    if serie is not None:
+        encoding["xOffset"] = alt.XOffset(f"{serie}:N")
+        encoding["color"] = alt.Color(
+            f"{serie}:N",
+            legend=alt.Legend() if show_legend else None
+        )
+    else:
+        encoding["color"] = alt.Color(
+            f"{x_axis}:N",
+            legend=alt.Legend() if show_legend else None
+        )
+
     return (
         alt.Chart(df)
         .mark_bar()
-        .encode(
-            x= x_axis +":N",
-            y= y_axis + ":Q",
-            color= x_axis +":N"
-        )
+        .encode(**encoding)
         .interactive()
     )
 
@@ -150,3 +188,13 @@ def create_donut_chart(df, x_axis, y_axis):
     )
 )
 
+def rename_axis(chart, labels: dict, x_axis: str):
+    expr = (
+        " : ".join(
+            [f"datum.{x_axis} == '{k}' ? '{v}'"
+             for k, v in labels.items()]
+        )
+        + f" : datum.{x_axis}"
+    )
+
+    return chart.transform_calculate(**{x_axis: expr})

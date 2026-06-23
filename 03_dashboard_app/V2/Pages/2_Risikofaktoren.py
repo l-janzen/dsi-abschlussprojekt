@@ -14,15 +14,6 @@ import altair as alt
 
 from function import *
 
-import warnings
-import sys
-from pathlib import Path
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import altair as alt
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 
@@ -39,78 +30,6 @@ st.set_page_config(
 )
 
 
-##############
-#helps with creating pills
-def pill_list(option):
-    item_list = []
-    for items in option:
-        item_list.append(items)
-    return item_list
-
-#helps with creating chart with different y values
-def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x_type = "T", y_axis = "Wert", y_scale = False, serie ="Serie", custom_labels = False, sort = [], show_legend=False):
-    x_axis = x_axis + ":" + x_type
-    y_axis = y_axis
-    serie = serie
-    if custom_labels == False:
-        return (
-            alt.Chart(df)
-            .transform_fold(
-                pill_list(selected_options),
-                as_= [serie ,y_axis]
-            )
-            .mark_line()
-            .encode(
-                x= alt.X( x_axis, 
-                         title= x_name,
-                         scale=alt.Scale(zero=False)
-                        ),
-                y= alt.Y(
-                    y_axis + ":Q",
-                    scale=alt.Scale( zero = False)
-                ),
-                color= alt.Color(
-                        serie + ":N",
-                        legend=None if not show_legend else alt.Legend()
-                    ),
-                
-                tooltip=[x_axis, serie + ":N", y_axis+ ":Q"],
-                
-            )
-            .interactive()
-        )
-    else:
-        expr = " : ".join(
-            [f"datum.{serie} == '{k}' ? '{v}'"
-            for k, v in custom_labels.items()]
-            ) + f" : datum.{serie}"
-        return (
-            alt.Chart(df)
-            .transform_fold(
-                pill_list(selected_options),
-                as_= [serie ,y_axis]
-            )
-            .transform_calculate(SerieLabel=expr)
-            .mark_line()
-            .encode(
-                x= alt.X( x_axis, title= x_name ),
-                y=alt.Y(
-                    y_axis + ":Q",
-                    scale=alt.Scale( zero = False)
-                ),
-                color= alt.Color("SerieLabel:N", title=serie,sort= sort ),
-                tooltip=[x_axis, "SerieLabel:N", y_axis+ ":Q"]
-            )
-            .interactive()
-        )
-
-#hilft ob ein stock ausgewählt wurde
-def selector(selected_option):
-    if selected_option:
-        return False
-    else:
-        selected_option = False
-        return  True
 
 ###################################################
 
@@ -123,26 +42,6 @@ def load_data():
 
 data_nhanes = load_data()
 df_nh = data_nhanes.copy()
-
-
-
-
-
-##############
-st.title("Was fördert Hypertonie")
-
-st.subheader("Körperliche Eigenschaften")
-
-st.subheader("Lebenstil risikofaktro")
-
-st.subheader("Vorerkrankung")
-
-st.write("hallo")
-
-st.write(":hearts:")
-
-
-
 
 
 
@@ -206,7 +105,8 @@ chart = create_chart(df, selected_options)
 ##Data loading
 @st.cache_data
 def load_data():
-    return  pd.read_csv(r".\02_ml_analysis\notebooks\nhanes_cleand.csv"
+    return  pd.read_csv(
+        r".\02_ml_analysis\notebooks\nhanes_cleand.csv"
     )
 
 data_nhanes = load_data()
@@ -216,14 +116,16 @@ df_nh = data_nhanes.copy()
 
 
 
+
 ##############
+#Titel
+st.title("Was fördert Hypertonie?")
 
 
+st.write("hallo")
 
+st.write(":hearts:")
 
-
-
-st.title("Was fördert Hypertonie")
 ##################################################################
 #Anfang der Körper
 st.subheader("Faktor: Körper")
@@ -276,7 +178,7 @@ chart_age_donut = create_donut_chart(age_hyp, x_axis="age_category",y_axis="hype
 
 
 #parameter Balken
-chart_age_bar = create_bar_chart(age_hyp, x_axis="age_category",y_axis="hypertension")
+chart_age_bar = create_bar_chart(age_hyp, x_axis="age_category",y_axis="hypertension", x_name="Alter (Jahren)",y_name="Teilnehmeranteil mit Hypertonie (%)", sort=["<20"])
 
 
 chart = create_chart(df, selected_options)
@@ -297,7 +199,11 @@ gender_hyp = pd.crosstab(
 ) * 100
 #formatiert df für Altair
 df_long2 = crosstab_conversion(gender_hyp, selected_options = None, x_axis = "gender", y_axis = "Anteil (%)", serie ="Hypertonie")
-#
+#ändert 
+
+
+
+
 chart_gender_donut = (
     alt.Chart(df_long2)
     .mark_arc(
@@ -318,17 +224,24 @@ chart_gender_donut = (
     )
 )
 
-chart_gender_bar = (
-    alt.Chart(df_long2)
-    .mark_bar()
-    .encode(
-        x="gender:N",
-        xOffset="Hypertonie:N",
-        y="Anteil (%):Q",
-        color="Hypertonie:N"
-    )
-    .interactive()
-)
+########################################
+#bar chart
+
+labels = {
+    "Female": "Frau",
+    "Male": "Mann"
+}
+expr = " : ".join(
+    [f"datum.gender == '{k}' ? '{v}'"
+     for k, v in labels.items()]
+) + " : datum.gender"
+
+
+chart_gender_bar = create_bar_chart(df_long2, "gender", y_axis="Anteil (%)",serie="Hypertonie",x_name="Geschlecht",y_name="Hypertonie-Anteil (%)", show_legend=True)
+
+
+chart_gender_bar = rename_axis(chart_gender_bar, labels, x_axis= "gender")
+chart_gender_bar = chart_gender_bar.transform_calculate(gender=expr)
 
 
 ####################################################################
@@ -359,9 +272,13 @@ bmi_hyp = (
 
 chart_BMI_donut = create_donut_chart(bmi_hyp, x_axis="bmi_category",y_axis="hypertension")
 
-chart_BMI_bar = create_bar_chart(bmi_hyp, x_axis="bmi_category",y_axis="hypertension")
+chart_BMI_bar = create_bar_chart(bmi_hyp, x_axis="bmi_category", x_name="BMI Kategorie", y_axis="hypertension", y_name="Teilnehmeranteil mit Hypertonie (%)")
 
 
+BMI_ger = ["Untergewicht", "Sollgewicht", "Übergewicht", "Fettleibigkeit"]
+BMI_labels = dict(zip(bmi_order,BMI_ger))
+
+chart_BMI_bar = rename_axis(chart_BMI_bar, BMI_labels, x_axis="bmi_category")
 
 with tab_bmi:
     st.subheader("BMI")
@@ -395,16 +312,13 @@ st.write(waist_hyp)
 
 df_waist = crosstab_conversion(waist_hyp, selected_options=None, x_axis= "waist_category", y_axis="Anteil (%)", serie="Hypertonie" )
 
-chart_waist_bar = (
-    alt.Chart(df_waist)
-    .mark_bar()
-    .encode(
-        x="waist_category:N",
-        xOffset="Hypertonie:N",
-        y="Anteil (%):Q",
-        color="Hypertonie:N"
-    )
-)
+chart_waist_bar = create_bar_chart(df_waist, x_axis= "waist_category", x_name="Taillenumfang", y_axis= "Anteil (%)",y_name="Hypertonie-Anteil (%)", show_legend="True", serie="Hypertonie", sort=[
+        "Kleine Taille",
+        "Normale Taille",
+        "Große Taille"
+    ])
+
+
 
 chart_waist_donut = (
     alt.Chart(df_waist)
@@ -467,9 +381,42 @@ with fil_col_l:
         type_chart = "Balken"
 
 
+with lifestyle_col:
+    tab_smoke, tab_alc, tab_sit, tab_sport = st.tabs(["Rauchen","Alkohol","Sitzlänge", "Sport"])
+#################################################################
+st.subheader("Faktor: Vorerkrankung")
 
 
-st.subheader("Vorerkrankung")
+#erstellt Spalten
+disease_col, fil_col_d = st.columns([2,1])
+#################################################################
+#filter für Körper
+with fil_col_d:
+    st.write("#### Thema der Graphen")
+    st.write("Hier kannst du das Thema der Graphen ändern.")
+
+    theme_d = st.radio("Thema", ["Streamlit", "Altair"], key = "disease_radio")
+    st.write("Du hast:", "_"+ theme + "_", "ausgewählt.")
+    if theme_d == "Streamlit":
+        chart_theme = "streamlit"
+    else:
+        chart_theme = None
+    
+    st.write("#### Typ der Graphen")
+    st.write("Hier kannst du den Typ der Graphen ändern.")
+
+    type_chart = st.radio("Typ", ["Donut", "Balken"], key ="type_d")
+    st.write("Du hast:", "_"+ type_chart + "_", "ausgewählt.")
+    if type_chart == "Donut":
+        type_chart = "Donut"
+    else:
+        type_chart = "Balken"
+
+
+with disease_col:
+    tab_smoke, tab_alc, tab_sit, tab_sport = st.tabs(["Rauchen","Alkohol","Sitzlänge", "Sport"])
+
+
 
 st.write("hallo")
 
@@ -477,10 +424,5 @@ st.write(":hearts:")
 
 
 
-
-
-
-
-
-st.subheader("Was kann dagegen gemacht werden")
+st.subheader("Was kann dagegen gemacht werden?")
 
