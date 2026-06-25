@@ -21,10 +21,30 @@ def pill_list(option):
     return item_list
 
 #helps with creating chart with different y values
-def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x_type = "T", y_axis = "Wert", serie ="Serie", custom_labels = False, sort = [], show_legend=False):
+def create_chart(
+    df,
+    selected_options,
+    x_axis="timestamp",
+    x_name="Datum",
+    x_type="T",
+    y_axis="Wert",
+    serie="Serie",
+    custom_labels=False,
+    sort=[],
+    show_legend=False,
+    color_map=None
+):
     x_axis = x_axis + ":" + x_type
     y_axis = y_axis
     serie = serie
+    color_scale = None
+
+    if color_map:
+        color_scale = alt.Scale(
+            domain=list(color_map.keys()),
+            range=list(color_map.values())
+        )
+
     if custom_labels == False:
         return (
             alt.Chart(df)
@@ -44,6 +64,7 @@ def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x
                 ),
                 color= alt.Color(
                         serie + ":N",
+                        scale=color_scale,
                         legend=None if not show_legend else alt.Legend()
                     ),
                 
@@ -71,7 +92,12 @@ def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x
                     y_axis + ":Q",
                     scale=alt.Scale( zero = False)
                 ),
-                color= alt.Color("SerieLabel:N", title=serie,sort= sort ),
+                color= alt.Color(
+                    "SerieLabel:N",
+                    title=serie,
+                    sort=sort,
+                    scale=color_scale
+                ),
                 tooltip=[x_axis, "SerieLabel:N", y_axis+ ":Q"]
             )
             .interactive()
