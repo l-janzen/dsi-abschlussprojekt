@@ -206,6 +206,8 @@ st.write("#### Lebensstil")
 spalte_5, spalte_6, spalte_7, spalte_8 = st.columns([1,1,1,1])
 st.write("#### Vorerkrankung")
 spalte_a, spalte_s, spalte_d, spalte_f = st.columns([1,1,1,1])
+
+
 with spalte_1:
     alter = st.number_input(
         "Alter",
@@ -307,7 +309,7 @@ with spalte_6:
     if st.session_state.pumpen > 5:
         person_dict["regular_alcohol_12m"] = 1
     else:
-        person_dict["regular_alcohol_12m"] = 1
+        person_dict["regular_alcohol_12m"] = 0
 
 
 
@@ -352,10 +354,7 @@ with spalte_a:
         if check_diabetis:
             person_dict["diabetes"]=1
         else:
-            person_dict["diabetes"]=1
-
-
-
+            person_dict["diabetes"]=0
 
 with spalte_s:
     with st.container(border=True):
@@ -376,8 +375,13 @@ with spalte_d:
 
 ################################################################################
 
+
+
+st.header("Zusammenfassung")
 with st.form("my_form"):
+    
     form1, form2, form3 = st.columns(3)
+    
     with form1:
         st.write(f"Alter: {st.session_state.alter} Jahre")
         st.write("Geschlecht:", st.session_state.sex)
@@ -388,14 +392,14 @@ with st.form("my_form"):
         st.write("Alkoholkonsum:", st.session_state.alkohol, st.session_state.pumpen)
         st.write("Aktivitätsniveau:",st.session_state.activity_slider, st.session_state.active)
         st.write("Sitzdauer pro Stunde:", st.session_state.sitting)
+    with form3:
+        st.write("Diabetis:", check_diabetis) 
+        st.write("Nierenerkrankung:", check_niere) 
+        st.write("Hohes Cholesterin:", check_chol) 
 
-    submitted = st.form_submit_button("Submit")
-
-if submitted:
-
-    df_person = pd.DataFrame([person_dict])
-
-    column_order = [
+    submitted = st.form_submit_button("Einreichen")
+df_person = pd.DataFrame([person_dict])
+column_order = [
         "age",
         "gender",
         "bmi",
@@ -408,8 +412,10 @@ if submitted:
         "kidney_disease",
         "activity_level"
     ]
+df_person = df_person[column_order]
+if submitted:
+    st.session_state.df_person = df_person.copy()
 
-    df_person = df_person[column_order]
 
     # Wahrscheinlichkeit berechnen
     proba_hypertension = log_model.predict_proba(df_person)[:, 1][0]
@@ -419,31 +425,36 @@ if submitted:
 
     if proba_hypertension >= threshold:
         prediction = "Erhöhtes Hypertonie-Risiko"
-        farbe = "red"
+        st.session_state.farbe = "red"
     else:
         prediction = "Kein erhöhtes Hypertonie-Risiko"
-        farbe = "green"
+        st.session_state.farbe = "green"
 
-    st.subheader("Ergebnis")
-
-    st.write("Eingabedaten")
-    st.dataframe(df_person)
-
-    st.write("Wahrscheinlichkeit:", f"{proba_hypertension:.2%}")
-
-    st.write(
-        f"Einschätzung: **{prediction}**"
-    )
-    if st.toggle("sklearn"):
-        st.write(
-            "Einschätzung sklearn:",
-            log_model.predict(df_person)[0]
-        )
 
 if submitted:
     st.session_state.prediction = prediction
     st.session_state.proba = proba_hypertension
 
+
+st.header("Ergebnis")
+if "prediction" not in st.session_state:
+    st.write("Um Ihr Risiko zu berechnen, drücken Sie auf Einreichen.")
+
+elif not st.session_state.df_person.equals(df_person):
+    st.warning("🚨 Eingabe ist nicht mehr aktuell. Bitte erneut auf 'Einreichen' klicken!")
+
+
 if "prediction" in st.session_state:
-    st.success(st.session_state.prediction)
-    st.write(f"Wahrscheinlichkeit: {st.session_state.proba:.2%}")
+    ss, sss = st.columns([1,3])
+    if st.session_state.farbe=="green":
+        
+        with ss:
+            st.success(f"Wahrscheinlichkeit: {st.session_state.proba:.2%}")
+            st.success(f"{st.session_state.prediction}")
+    if st.session_state.farbe=="red":
+        with ss:
+            st.error(f"Wahrscheinlichkeit: {st.session_state.proba:.2%}")
+            st.error(f"{st.session_state.prediction}")
+
+if st.toggle("Dataframe (Eingabe ins ML)"):
+    st.dataframe(df_person)
