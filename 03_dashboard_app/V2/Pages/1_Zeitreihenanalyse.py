@@ -485,7 +485,7 @@ if not pick_country:
             tab5, tab6 = st.tabs(
                 ["Prävalenz", "Sterberate"]
             )
-            chart_country = create_chart(df_merge_country, selected_country, x_axis = "Jahr", y_axis = "Prävalenz (%)", serie ="Länder", show_legend= True)
+            chart_country = create_chart2(df_merge_country, selected_country, x_axis = "Jahr", y_axis = "Prävalenz (%)", serie ="Länder", show_legend= True)
 
 
 
@@ -503,7 +503,7 @@ if not pick_country:
                     df_merge_country = df_merge_country[cols]
                     st.dataframe(df_merge_country)
 
-            chart_stirb = create_chart(df_merge_stirb, selected_country, x_axis = "Jahr", y_axis = "Sterberate pro 100.000 Einwohner", serie ="Länder", show_legend= True)
+            chart_stirb = create_chart2(df_merge_stirb, selected_country, x_axis = "Jahr", y_axis = "Sterberate pro 100.000 Einwohner", serie ="Länder", show_legend= True)
             with tab6:
                 st.altair_chart(chart_stirb, theme=chart_theme, use_container_width=True)
                 st.caption("In den Jahren zwischen 1990 - 2000 gibt es keine Daten")
