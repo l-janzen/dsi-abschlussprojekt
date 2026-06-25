@@ -37,15 +37,17 @@ st.set_page_config(
 
 #Überschrift
 st.title("Risiko auf Hypertonie")
-
+c1,c2 = st.columns([1,1])
 theme = st_javascript("""
 window.matchMedia('(prefers-color-scheme: dark)').matches
 """)
 if theme:
-    st.image(str(BASE_DIR / "Image" / "ChatGPT Image 20. Juni 2026, 23_10_12.png"))
+    with c1:
+        st.image(str(BASE_DIR / "Image" / "ChatGPT Image 20. Juni 2026, 23_10_12.png"))
     
 else:
-    st.image(str(BASE_DIR / "Image" / "ChatGPT Image 20. Juni 2026, 23_10_17.png"))
+    with c1:
+        st.image(str(BASE_DIR / "Image" / "ChatGPT Image 20. Juni 2026, 23_10_17.png"))
 
 
 
