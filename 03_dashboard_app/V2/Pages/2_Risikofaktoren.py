@@ -45,90 +45,21 @@ df_nh = data_nhanes.copy()
 
 
 
-###################################################
-#das wird später gelöscht, zeile 28 - 102
-#dummy frame für die Zeitfilterung
-np.random.seed(42)
-data = pd.DataFrame({
-    "timestamp": pd.date_range("2025-01-01", periods=2000, freq="D"),
-    "value a": np.random.randn(2000).cumsum(),
-    "value b" : np.random.randn(2000).cumsum()
-})
-
-
-df = pd.DataFrame({
-    "timestamp": pd.date_range("2025-01-01", periods=2000, freq="D"),
-    "value a": np.random.randn(2000).cumsum(),
-    "value b" : np.random.randn(2000).cumsum()
-})
-
-#schaut nach min und max Datum
-first_date = df["timestamp"].min().to_pydatetime()
-last_date = df["timestamp"].max().to_pydatetime()
-
-
-#fügt die Achsenamen in die Seitenleiste als pills und filtert duplikate
-selected_options = st.sidebar.pills("Auswahl", data.columns[1:].drop_duplicates(), selection_mode ="multi")
-
-#schaut ob eine Pill ausgewählt wird
-test_value = selector(selected_options)
-
-#Zeitfilterung
-date_range = (first_date, last_date)
-selected_date_range = st.sidebar.slider(
-    "Wähle deinen Zeitraum",
-    min_value = first_date,
-    max_value = last_date,
-    value = date_range , #setzt den Zeitrahmen auf dem vollen Zeitraum
-    format = "YYYY-MM-DD",
-    step = pd.Timedelta(weeks=1).to_pytimedelta(), #stellt sicher, dass der slider in 1 Woche schritten arbeitet
-    disabled = test_value,
-    key = "hallo3"
-)
-
-
-#Daterange Implementierung
-if selected_options:
-    df = df[
-        (df["timestamp"]>=selected_date_range[0]) &
-        (df["timestamp"]<=selected_date_range[1])
-    ]
-
-
-
-
-chart = create_chart(df, selected_options)
-    
-
-###################################################
-
-##Data loading
-@st.cache_data
-def load_data():
-    return  pd.read_csv(
-        r".\02_ml_analysis\notebooks\nhanes_cleand.csv"
-    )
-
-data_nhanes = load_data()
-df_nh = data_nhanes.copy()
-
-
-
 
 
 
 ##############
 #Titel
-st.title("Was fördert Hypertonie?")
+st.title("Was sind die wichtigsten Risikofaktoren bei Hypertonie?")
+st.header(":hearts: Informationen zur Seite")
+
+st.write("Berücksichtigt werden unter anderem Alter, Geschlecht, Körpergewicht, Körpergröße, BMI, Taillenumfang, Raucherstatus, Alkoholkonsum, körperliche Aktivität, Sitzzeit sowie bestehende Vorerkrankungen wie Diabetes, chronische Nierenerkrankung und erhöhter Cholesterinstatus.")
 
 
-st.write("hallo")
-
-st.write(":hearts:")
 
 ##################################################################
 #Anfang der Körper
-st.subheader("Faktor: Körper")
+st.header("Faktor: Körper")
 
 #erstellt Spalten
 body_col, fil_col_b = st.columns([2,1])
@@ -174,19 +105,22 @@ age_hyp = (
 
 #parameter Donut
 
-chart_age_donut = create_donut_chart(age_hyp, x_axis="age_category",y_axis="hypertension")
+chart_age_donut = create_donut_chart(age_hyp, x_axis="age_category", x_name="Alterskategorie",y_axis="hypertension", inner_r=80 ,outer_r=130)
 
 
 #parameter Balken
 chart_age_bar = create_bar_chart(age_hyp, x_axis="age_category",y_axis="hypertension", x_name="Alter (Jahren)",y_name="Teilnehmeranteil mit Hypertonie (%)", sort=["<20"])
 
 
-chart = create_chart(df, selected_options)
+
 with tab_alter:
+    st.subheader("Alter")
     if type_chart == "Donut":
         st.altair_chart(chart_age_donut, theme=chart_theme, use_container_width=True)
     else:
         st.altair_chart(chart_age_bar, theme=chart_theme, use_container_width=True)
+    if st.toggle("Dataframe(Alter) anzeigen"):
+        st.dataframe(age_hyp)
 
 
 ######################################################
@@ -201,52 +135,32 @@ gender_hyp = pd.crosstab(
 df_long2 = crosstab_conversion(gender_hyp, selected_options = None, x_axis = "gender", y_axis = "Anteil (%)", serie ="Hypertonie")
 #ändert 
 
+chart_gender_donut = create_donut_chart(df_long2, x_axis="Hypertonie", x_name="Hypertonie",y_axis="Anteil (%)", inner_r=50 ,outer_r=100)
+
+chart_gender_donut = extension_donut(chart_gender_donut, facet_title="Geschlecht")
 
 
-
-chart_gender_donut = (
-    alt.Chart(df_long2)
-    .mark_arc(
-        innerRadius=50,
-        outerRadius=100
-    )
-    .encode(
-        theta="Anteil (%):Q",
-        color="Hypertonie:N"
-    )
-    .properties(
-    width=200,
-    height=250
-    )
-    .facet(
-        column="gender:N",
-        spacing = 30
-    )
-)
 
 ########################################
 #bar chart
+
+chart_gender_bar = create_bar_chart(df_long2, "gender", y_axis="Anteil (%)",serie="Hypertonie",x_name="Geschlecht",y_name="Hypertonie-Anteil (%)", show_legend=True)
+
+
+################################################################################
+#umbenennen der Werte in der Achse
 
 labels = {
     "Female": "Frau",
     "Male": "Mann"
 }
-expr = " : ".join(
-    [f"datum.gender == '{k}' ? '{v}'"
-     for k, v in labels.items()]
-) + " : datum.gender"
 
-
-chart_gender_bar = create_bar_chart(df_long2, "gender", y_axis="Anteil (%)",serie="Hypertonie",x_name="Geschlecht",y_name="Hypertonie-Anteil (%)", show_legend=True)
-
-
+chart_gender_donut = rename_axis(chart_gender_donut, labels, x_axis= "gender")
 chart_gender_bar = rename_axis(chart_gender_bar, labels, x_axis= "gender")
-chart_gender_bar = chart_gender_bar.transform_calculate(gender=expr)
-
 
 ####################################################################
 with tab_gender:
-    st.write("s")
+    st.subheader("Geschlecht")
     if type_chart == "Donut":
         col1, col2, col3 = st.columns([1,5,1])
         with col1:
@@ -259,6 +173,8 @@ with tab_gender:
             st.write(' ')
     else:    
         st.altair_chart(chart_gender_bar, theme=chart_theme, use_container_width=True)
+    if st.toggle("Dataframe(Geschlecht) anzeigen"):
+        st.dataframe(gender_hyp)
 
 ######################################################################
 #alter chart
@@ -270,7 +186,7 @@ bmi_hyp = (
     * 100
 ).reset_index()
 
-chart_BMI_donut = create_donut_chart(bmi_hyp, x_axis="bmi_category",y_axis="hypertension")
+chart_BMI_donut = create_donut_chart(bmi_hyp, x_axis="bmi_category", x_name="BMI-Kategorie",y_axis="hypertension", y_name="Hypertonie" ,inner_r=80 ,outer_r=130)
 
 chart_BMI_bar = create_bar_chart(bmi_hyp, x_axis="bmi_category", x_name="BMI Kategorie", y_axis="hypertension", y_name="Teilnehmeranteil mit Hypertonie (%)")
 
@@ -278,15 +194,20 @@ chart_BMI_bar = create_bar_chart(bmi_hyp, x_axis="bmi_category", x_name="BMI Kat
 BMI_ger = ["Untergewicht", "Sollgewicht", "Übergewicht", "Fettleibigkeit"]
 BMI_labels = dict(zip(bmi_order,BMI_ger))
 
+#nimmt ein Dict an und übersetzt die Kategorienamen
+chart_BMI_donut = rename_axis(chart_BMI_donut, BMI_labels, x_axis="bmi_category")
 chart_BMI_bar = rename_axis(chart_BMI_bar, BMI_labels, x_axis="bmi_category")
 
 with tab_bmi:
-    st.subheader("BMI")
+    st.subheader("Body Mass Index (BMI)")
     if type_chart == "Donut":
 
         st.altair_chart(chart_BMI_donut, theme=chart_theme, use_container_width=True)
     else:    
         st.altair_chart(chart_BMI_bar, theme=chart_theme, use_container_width=True)
+
+    if st.toggle("Dataframe(BMI) anzeigen"):
+        st.dataframe(bmi_hyp)
 ###############################################################
 #Taillenumfang
 #https://www.fittrack.de/deine-taille-wie-viel-sollte-sie-messen/
@@ -295,9 +216,9 @@ df_nh["waist_category"] = pd.cut(
     df_nh["waist_circumference(cm)"],
     bins=[0, 81, 102, float("inf")],
     labels=[
-        "Kleine Taille",
-        "Normale Taille",
-        "Große Taille"
+        "Kleine Taille (< 81 cm)",
+        "Normale Taille (81-102 cm)",
+        "Große Taille (> 102 cm)"
     ],
     right=False
 )
@@ -308,37 +229,39 @@ waist_hyp = pd.crosstab(
     normalize="index"
 ) * 100
 
-st.write(waist_hyp)
+
 
 df_waist = crosstab_conversion(waist_hyp, selected_options=None, x_axis= "waist_category", y_axis="Anteil (%)", serie="Hypertonie" )
 
-chart_waist_bar = create_bar_chart(df_waist, x_axis= "waist_category", x_name="Taillenumfang", y_axis= "Anteil (%)",y_name="Hypertonie-Anteil (%)", show_legend="True", serie="Hypertonie", sort=[
+chart_waist_bar = create_bar_chart(df_waist, x_axis= "waist_category", x_name="Taillenkategorie", y_axis= "Anteil (%)",y_name="Hypertonie-Anteil (%)", show_legend="True", serie="Hypertonie", sort=[
+        "Kleine Taille",
+        "Normale Taille",
+        "Große Taille"
+    ])
+
+chart_waist_donut = create_donut_chart(df_waist,x_axis="Hypertonie",x_name="Taillenkategorie",y_axis="Anteil (%)", y_name="Hypertonie-Anteil (%)", inner_r=45, outer_r=90)
+
+chart_waist_donut = extension_donut(chart_waist_donut, width= 100, height=250,facet_column="waist_category", facet_title="Taillenkategorie",sort=[
         "Kleine Taille",
         "Normale Taille",
         "Große Taille"
     ])
 
 
+def_waist =[
+        "Kleine Taille (< 81 cm)",
+        "Normale Taille (81-102 cm)",
+        "Große Taille (> 102 cm)"
+    ]
 
-chart_waist_donut = (
-    alt.Chart(df_waist)
-    .mark_arc(
-        innerRadius=50,
-        outerRadius=100
-    )
-    .encode(
-        theta="Anteil (%):Q",
-        color="Hypertonie:N"
-    )
-    .properties(
-    width=200,
-    height=250
-    )
-    .facet(
-        column="waist_category:N",
-        spacing = 30
-    )
-)
+ab_waist= [
+        "Kleine Taille",
+        "Normale Taille",
+        "Große Taille"
+    ]
+waist_dict = dict(zip(def_waist,ab_waist ))
+
+chart_waist_bar = rename_axis(chart_waist_bar, waist_dict, x_axis="waist_category")
 
 
 
@@ -346,14 +269,26 @@ with tab_taille:
     st.subheader("Taillenumfang")
     
     if type_chart == "Donut":
-        st.altair_chart(chart_waist_donut, theme=chart_theme, use_container_width=True)
+        col1, col2, col3 = st.columns([1,50,1])
+        with col1:
+            st.write(' ')
+
+        with col2:
+            st.altair_chart(chart_waist_donut, theme=chart_theme, use_container_width=False)
+
+        with col3:
+            st.write(' ')
+        
     else:
         st.altair_chart(chart_waist_bar, theme=chart_theme, use_container_width=True)
+    st.caption("Kleine Taille (< 81 cm), Normale Taille (81-102 cm) und Große Taille (> 102 cm)")
+    if st.toggle("Dataframe(Taille) anzeigen"):
+        st.dataframe(waist_hyp)
 
 
 #################################################################
 #Anfang Lebenstil
-st.subheader("Faktor Lebensstil")
+st.header("Faktor: Lebensstil")
 
 #erstellt Spalten
 lifestyle_col, fil_col_l = st.columns([2,1])
@@ -382,15 +317,206 @@ with fil_col_l:
 
 
 with lifestyle_col:
-    tab_smoke, tab_alc, tab_sit, tab_sport = st.tabs(["Rauchen","Alkohol","Sitzlänge", "Sport"])
+    tab_smoke, tab_alc, tab_sit = st.tabs(["Rauchen","Alkohol","Aktivität und Sitzdauer"])
+
+########################################################################
+#rauchen
+smoke_hyp = (
+    df_nh.groupby("current_smoker")["hypertension"]
+    .mean()
+    * 100
+).reset_index()
+
+#bar chart
+chart_smoke_bar = create_bar_chart(smoke_hyp, x_axis="current_smoker", x_name="Rauchstatus", y_axis="hypertension",y_name="Hypertonie-Anteil (%)")
+
+#donut chart
+chart_smoke_donut = create_donut_chart(smoke_hyp, x_axis="current_smoker", x_name="Rauchstatus", y_axis="hypertension",y_name="Hypertonie-Anteil (%)")
+
+#dict smoke
+old_smoke = [0,1]
+new_smoke_list = ["Nichtraucher", "Raucher"]
+dict_smoke = dict(zip(old_smoke, new_smoke_list))
+#werte umbenennen
+chart_smoke_bar = rename_axis(chart_smoke_bar, dict_smoke, x_axis="current_smoker")
+chart_smoke_donut = rename_axis(chart_smoke_donut, dict_smoke, x_axis="current_smoker")
+#smoke graph
+with tab_smoke:
+    st.subheader("Anteil von Hypertonie nach aktuellem Rauchstatus")
+
+    if type_chart == "Donut":
+        st.altair_chart(chart_smoke_donut, theme=chart_theme, use_container_width=True)
+      
+    else:
+        st.altair_chart(chart_smoke_bar, theme=chart_theme, use_container_width=True)
+    if st.toggle("Dataframe(Rauchen) anzeigen"):
+        st.dataframe(smoke_hyp)
+
+##########################################################################
+#Alkohol
+alc_hyp = (
+    df_nh.groupby("regular_alcohol_12m")["hypertension"]
+    .mean()
+    * 100
+).reset_index()
+
+#bar chart
+chart_alc_bar = create_bar_chart(alc_hyp, x_axis="regular_alcohol_12m", x_name="Alkholkonsumstatus", y_axis="hypertension",y_name="Hypertonie-Anteil (%)", sort =["0","1"])
+
+
+
+#donut chart
+chart_alc_donut = create_donut_chart(alc_hyp, x_axis="regular_alcohol_12m", x_name="Alkholkonsumstatus", y_axis="hypertension",y_name="Hypertonie-Anteil (%)")
+
+
+#dict alc
+old_alc = [1,0]
+new_alc_list = ["Alkoholgruppe","Abstinenzgruppe"]
+dict_alc = dict(zip(old_alc, new_alc_list))
+
+
+#werte umbenennen
+chart_alc_bar = rename_axis(chart_alc_bar, dict_alc, x_axis="regular_alcohol_12m")
+chart_alc_donut = rename_axis(chart_alc_donut, dict_alc, x_axis="regular_alcohol_12m")
+
+
+
+#alc graph erstellen
+with tab_alc:
+    st.subheader("Anteil von Hypertonie nach 12 monatigen Alkoholkonsum")
+
+    if type_chart == "Donut":
+        st.altair_chart(chart_alc_donut, theme=chart_theme, use_container_width=True)
+      
+    else:
+        st.altair_chart(chart_alc_bar, theme=chart_theme, use_container_width=True)
+    if st.toggle("Dataframe(Alohol) anzeigen"):
+        st.dataframe(alc_hyp)
+################################################################################
+
+activity_summary = (
+    df_nh.groupby("activity_level_label")
+    .agg(
+        n=("hypertension", "count"),
+        hypertonie_anteil=("hypertension", "mean"),
+        mittlere_sitzzeit=("sitting_hours_per_day", "mean"),
+        median_sitzzeit=("sitting_hours_per_day", "median")
+    )
+)
+
+df_nh["sitting_category"] = pd.cut(
+    df_nh["sitting_hours_per_day"],
+    bins=[0, 4, 6, 10, float("inf")],
+    labels=[
+        "Niedrig (<4h)",
+        "Mäßig (4-6h)",
+        "Hoch (6-10h)",
+        "Sehr hoch (>10h)"
+    ],
+    right=False
+)
+
+bubble_df = (
+    df_nh.groupby(
+        ["activity_level_label", "sitting_category"],
+        observed=True
+    )["hypertension"]
+    .mean()
+    .reset_index()
+)
+
+bubble_df["hypertonie_anteil"] = (
+    bubble_df["hypertension"] * 100
+)
+min_val = bubble_df["hypertonie_anteil"].min()
+max_val = bubble_df["hypertonie_anteil"].max()
+
+
+chart = (
+    alt.Chart(bubble_df)
+    .mark_circle()
+    .encode(
+        x=alt.X(
+            "sitting_category:N",
+            title="Sitzdauer pro Tag",
+            axis=alt.Axis(
+                labelAngle=0
+                ),
+            sort=[
+                "Niedrig (<4h)",
+                "Mäßig (4-6h)",
+                "Hoch (6-10h)",
+                "Sehr hoch (>10h)"
+            ]
+        ),
+        y=alt.Y(
+            "activity_level_label:N",
+            title="Aktivitätsniveau"
+        ),
+        size=alt.Size(
+            "hypertonie_anteil:Q",
+            title="Hypertonie-Anteil (%)",
+            scale=alt.Scale(
+                range=[100, 2000]
+            )
+        ),
+        color=alt.Color(
+            "hypertonie_anteil:Q",
+            title="Hypertonie-Anteil (%)",
+            scale=alt.Scale(
+                domain=[25, 40, 55],
+                range=[
+                    "#2E8B57",  # Grün
+                    "#F4B400",  # Goldgelb
+                    "#D32F2F"   # Rot
+                ]
+                
+            ),
+            legend=alt.Legend(
+                values=[20, 30, 40, 50, 60]
+            )
+        ),
+        tooltip=[
+            "activity_level_label:N",
+            "sitting_category:N",
+            alt.Tooltip(
+                "hypertonie_anteil:Q",
+                format=".1f",
+                title="Hypertonie (%)"
+            )
+        ]
+    )
+    .properties(
+        width=500,
+        height=320
+    )
+)
+
+
+with tab_sit:
+    st.subheader("Anteil von Hypertonie nach Aktivität und Sitzdauer")
+
+    st.altair_chart(chart, theme=chart_theme, use_container_width=True)
+      
+    
+    if st.toggle("Dataframe(Sitzdauer) anzeigen"):
+        activity_summary["hypertonie_anteil"] = activity_summary["hypertonie_anteil"]*100
+        st.dataframe(activity_summary)
+        bubble_df.pop("hypertension")
+        st.dataframe(bubble_df)
+
+
+
+
+
 #################################################################
-st.subheader("Faktor: Vorerkrankung")
+st.header("Faktor: Vorerkrankung")
 
 
 #erstellt Spalten
 disease_col, fil_col_d = st.columns([2,1])
 #################################################################
-#filter für Körper
+#filter für disease
 with fil_col_d:
     st.write("#### Thema der Graphen")
     st.write("Hier kannst du das Thema der Graphen ändern.")
@@ -413,16 +539,69 @@ with fil_col_d:
         type_chart = "Balken"
 
 
+#################################################################################disease in einen Df
+
+pre_existing_conditions = ["diabetes", "kidney_disease", "high_cholesterol"]
+
+condition_summary = []
+
+for col in pre_existing_conditions:
+    temp = (
+        df_nh.groupby(col)["hypertension"]
+        .agg(
+            n="count",
+            hypertonie_anteil="mean"
+        )
+        .reset_index()
+    )
+    
+    temp["hypertonie_anteil"] = temp["hypertonie_anteil"] * 100
+    temp["vorerkrankung"] = col
+    
+    temp = temp.rename(columns={col: "status"})
+    
+    condition_summary.append(temp)
+
+condition_summary = pd.concat(condition_summary, ignore_index=True)
+
+condition_summary = condition_summary.round(2)
+
+condition_summary ["status"] = condition_summary ["status"].replace({
+    1: "ja",
+    0: "nein"
+    
+})
+
+
+#Parameter char
+#bar chart
+chart_disease_bar = create_bar_chart(condition_summary, x_axis="vorerkrankung", x_name="Vorerkrankung",y_axis="hypertonie_anteil", y_name="Hypertonie-Anteil (%)",serie="status", sort=["ja"], show_legend=True)
+#donut chart disease
+chart_disease_donut = create_donut_chart(condition_summary, x_axis="status", x_name="Hypertonie",y_axis="hypertonie_anteil", y_name="Hypertonie-Anteil (%)",sort=["ja","nein"])
+
+chart_disease_donut = extension_donut(chart_disease_donut, facet_column="vorerkrankung",facet_title="Vorerkrankung")
+
+#Vorerkrankung umbenennen im graph
+
+disease_new = ["Diabetis", "Nierenerkrankung", "Hohes Cholesterin"]
+disease_dict = dict(zip(pre_existing_conditions,disease_new))
+
+chart_disease_donut = rename_axis(chart_disease_donut,disease_dict, "vorerkrankung" )
+chart_disease_bar = rename_axis(chart_disease_bar,disease_dict, "vorerkrankung" )
+
+
+chart_disease_bar = chart_disease_bar.properties(
+        height=420
+    )
+
+
 with disease_col:
-    tab_smoke, tab_alc, tab_sit, tab_sport = st.tabs(["Rauchen","Alkohol","Sitzlänge", "Sport"])
+    if type_chart == "Donut":
+        st.altair_chart(chart_disease_donut, theme=chart_theme, use_container_width=True)
+    else:
+        st.altair_chart(chart_disease_bar, theme=chart_theme, use_container_width=True)
 
+if st.toggle("Dataframe(Vorerkrankung) anzeigen"):
+    st.dataframe(condition_summary)
 
-
-st.write("hallo")
-
-st.write(":hearts:")
-
-
-
-st.subheader("Was kann dagegen gemacht werden?")
 

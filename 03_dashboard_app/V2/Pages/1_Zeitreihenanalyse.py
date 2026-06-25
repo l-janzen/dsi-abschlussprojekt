@@ -70,7 +70,7 @@ df_stirb = data_stirb.copy()
 
 ################################################################################
 st.title("Entwicklung der Hypertonie-Prävalenz")
-st.subheader(":hearts:")
+st.header(":hearts: Informationen zur Seite")
 st.write(
     "Diese Seite zeigt die zeitliche Entwicklung der Hypertonie-Prävalenz in Deutschland "
     "für Erwachsene im Alter von 30 bis 79 Jahren im Zeitraum 2000 bis 2019. "
@@ -175,6 +175,20 @@ custom_labels = {
     "hypertension_men": "Mann",
     "hypertension_prevalence": "Gesamt"
 }
+
+gender_color_map = {
+    "Gesamt": "#2F5D8C",
+    "Frau": "#E96BA8",
+    "Mann": "#5DADE2"
+}
+
+death_color_map = {
+    "hypertensive_heart_disease_death_rate": "#6B0F1A"
+}
+
+gap_color_map = {
+    "gender_gap_men_minus_women": "#7A7A7A"
+}
 #erstellt eine Liste von den neuen Spaltennamen
 columns = data_year.columns[3:6].drop_duplicates()
 new_columns = [custom_labels.get(col, col) for col in columns]
@@ -211,7 +225,17 @@ with zeit_container:
 
 
         if selected_gender:
-            chart_hyper = create_chart(df_hyper_year, gender_list, x_axis = "Year", y_axis = "Prävalenz (%)", serie ="Geschlecht", custom_labels=custom_labels, sort =["Gesamt"], show_legend= True)
+            chart_hyper = create_chart(
+                df_hyper_year,
+                gender_list,
+                x_axis="Year",
+                y_axis="Prävalenz (%)",
+                serie="Geschlecht",
+                custom_labels=custom_labels,
+                sort=["Gesamt", "Frau", "Mann"],
+                show_legend=True,
+                color_map=gender_color_map
+            )
             chart_hyper = chart_hyper.mark_circle(size=80) + chart_hyper
             st.altair_chart(chart_hyper, theme = chart_theme, use_container_width=True)
 
@@ -229,7 +253,14 @@ with zeit_container:
 
 with tab4:
     st.subheader("Geschlechterunterschied bei der Hypertonie-Prävalenz in Deutschland")
-    chart_gap = create_chart(df_hyper_year, ["gender_gap_men_minus_women"], x_axis = "Year", y_axis = "Geschlechterdifferenz in Prozentpunkte", serie ="Serie")
+    chart_gap = create_chart(
+        df_hyper_year,
+        ["gender_gap_men_minus_women"],
+        x_axis="Year",
+        y_axis="Geschlechterdifferenz in Prozentpunkte",
+        serie="Serie",
+        color_map=gap_color_map
+    )
     chart_gap = chart_gap.mark_circle(size=80) + chart_gap
     st.altair_chart(chart_gap, theme = chart_theme, use_container_width=True)
     st.write(
@@ -241,7 +272,14 @@ with tab4:
 
 with tab_stirb:
     st.subheader("Sterberate aufgrund einer hypertensiven Herzerkrankung in Deutschland, 2000-2019")
-    chart_stirb = create_chart(df_hyper_year, ["hypertensive_heart_disease_death_rate"], x_axis = "Year", y_axis = "Sterberate pro 100.000 Einwohner", serie ="Hallo")
+    chart_stirb = create_chart(
+        df_hyper_year,
+        ["hypertensive_heart_disease_death_rate"],
+        x_axis="Year",
+        y_axis="Sterberate pro 100.000 Einwohner",
+        serie="Hallo",
+        color_map=death_color_map
+    )
     chart_stirb = chart_stirb.mark_circle(size=80) + chart_stirb
     st.altair_chart(chart_stirb, theme = chart_theme, use_container_width=True)
     st.write(
@@ -253,7 +291,16 @@ with tab_stirb:
 
 with tab_relation:
     st.subheader("Beziehung zwischen Prävalenz und Sterberate")
-    chart_relation = create_chart(df_hyper_year, ["hypertensive_heart_disease_death_rate"], x_axis = "hypertension_prevalence", x_name = "Hypertonie (%)", x_type= "Q" , y_axis = "Sterberate pro 100.000 Einwohner", serie ="Serie")
+    chart_relation = create_chart(
+        df_hyper_year,
+        ["hypertensive_heart_disease_death_rate"],
+        x_axis="hypertension_prevalence",
+        x_name="Hypertonie (%)",
+        x_type="Q",
+        y_axis="Sterberate pro 100.000 Einwohner",
+        serie="Serie",
+        color_map=death_color_map
+    )
     chart_relation = chart_relation.mark_circle(size=80) 
     st.altair_chart(chart_relation, theme = chart_theme, use_container_width=True)
 

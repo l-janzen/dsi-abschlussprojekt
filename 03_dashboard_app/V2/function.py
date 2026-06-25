@@ -21,10 +21,30 @@ def pill_list(option):
     return item_list
 
 #helps with creating chart with different y values
-def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x_type = "T", y_axis = "Wert", serie ="Serie", custom_labels = False, sort = [], show_legend=False):
+def create_chart(
+    df,
+    selected_options,
+    x_axis="timestamp",
+    x_name="Datum",
+    x_type="T",
+    y_axis="Wert",
+    serie="Serie",
+    custom_labels=False,
+    sort=[],
+    show_legend=False,
+    color_map=None
+):
     x_axis = x_axis + ":" + x_type
     y_axis = y_axis
     serie = serie
+    color_scale = None
+
+    if color_map:
+        color_scale = alt.Scale(
+            domain=list(color_map.keys()),
+            range=list(color_map.values())
+        )
+
     if custom_labels == False:
         return (
             alt.Chart(df)
@@ -44,6 +64,7 @@ def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x
                 ),
                 color= alt.Color(
                         serie + ":N",
+                        scale=color_scale,
                         legend=None if not show_legend else alt.Legend()
                     ),
                 
@@ -71,7 +92,12 @@ def create_chart(df, selected_options, x_axis = "timestamp", x_name = "Datum", x
                     y_axis + ":Q",
                     scale=alt.Scale( zero = False)
                 ),
-                color= alt.Color("SerieLabel:N", title=serie,sort= sort ),
+                color= alt.Color(
+                    "SerieLabel:N",
+                    title=serie,
+                    sort=sort,
+                    scale=color_scale
+                ),
                 tooltip=[x_axis, "SerieLabel:N", y_axis+ ":Q"]
             )
             .interactive()
@@ -133,7 +159,8 @@ def create_bar_chart(
     x_name=None,
     y_name=None,
     show_legend=False,
-    sort=None
+    sort=None,
+    angle=0
 ):
     if x_name is None:
         x_name = x_axis
@@ -148,6 +175,9 @@ def create_bar_chart(
         "x": alt.X(
             f"{x_axis}:N",
             title=x_name,
+            axis=alt.Axis(
+                labelAngle=angle
+                ),
             sort=sort
         ),
         "y": alt.Y(
@@ -176,17 +206,69 @@ def create_bar_chart(
     )
 
 #einfache Parameter Eingabe für donut
-def create_donut_chart(df, x_axis, y_axis):
+def create_donut_chart(
+    df,
+    x_axis,
+    y_axis,
+    x_name=None,
+    y_name=None,
+    sort=None,
+    inner_r = 50,
+    outer_r = 100
+):
+    if x_name is None:
+        x_name = x_axis
+
+    if y_name is None:
+        y_name = y_axis
+
+    if sort is None:
+        sort = []
+
     return (
-    alt.Chart(df)
-    .mark_arc(
-        innerRadius=100
+        alt.Chart(df)
+        .mark_arc(
+        innerRadius=inner_r,
+        outerRadius=outer_r
+        )
+        .encode(
+            theta=alt.Theta(f"{y_axis}:Q"),
+            color=alt.Color(
+                f"{x_axis}:N",
+                title=x_name,
+                sort=sort
+            ),
+            tooltip=[
+                f"{x_axis}:N",
+                f"{y_axis}:Q"
+            ]
+        )
     )
-    .encode(
-        theta= y_axis+":Q",
-        color= x_axis+":N"
+
+def extension_donut(
+    chart,
+    facet_column="gender",
+    facet_title="Geschlecht",
+    width=200,
+    height=250,
+    spacing=30,
+    sort=[]
+):
+    return (
+        chart
+        .properties(
+            width=width,
+            height=height
+        )
+        .facet(
+            column=alt.Column(
+                f"{facet_column}:N",
+                title=facet_title,
+                sort=sort
+            ),
+            spacing=spacing
+        )
     )
-)
 
 def rename_axis(chart, labels: dict, x_axis: str):
     expr = (
