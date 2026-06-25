@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
+
 import warnings
 import streamlit as st
 import pandas as pd
@@ -23,9 +24,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score,precision_recall_curve,roc_auc_score
 from sklearn.metrics import ConfusionMatrixDisplay
 
+import joblib
 
-
-
+BASE_DIR = Path(__file__).resolve().parents[3]
 
 st.set_page_config(
     page_title="Risiko auf Hypertonie",
@@ -38,6 +39,109 @@ st.set_page_config(
     }
 )
 
+
+
+#################################
+#Daten werden geladen
+@st.cache_data
+def load_data():
+    data_path = BASE_DIR / "02_ml_analysis" / "notebooks" / "nhanes_cleand.csv"
+    return  pd.read_csv(data_path
+    )
+
+data_nhanes = load_data()
+df = data_nhanes.copy()
+
+df['gender'] = df['gender'].replace({
+    'Male' : '1',
+    'Female' : '2'
+})
+
+df['gender'] = pd.to_numeric(df['gender'], errors= 'coerce')
+############################################
+#Hier fängt der ML teil an
+
+#feature and target
+#features 
+X = df[
+    [
+        "age",
+        "gender",
+        "bmi",
+        "high_cholesterol",
+        "waist_circumference(cm)",
+        "sitting_hours_per_day",
+        "current_smoker",
+        "regular_alcohol_12m",
+        "diabetes",
+        "kidney_disease",
+        "activity_level"
+        
+    ]
+]
+
+
+#Target 
+y = df["hypertension"]
+
+
+# Train-Test-Split 
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+#Modelltraining  nach Klasse logistische Regression 
+# daten standardisiert
+log_model = Pipeline ([
+    ('scaler', StandardScaler()),
+    ('model', LogisticRegression(max_iter= 1000,
+                                 class_weight= 'balanced'))
+])
+
+#model trainieren 
+log_model.fit(X_train, y_train)
+
+
+label = [
+        "age",
+        "gender",
+        "bmi",
+        "high_cholesterol",
+        "waist_circumference(cm)",
+        "sitting_hours_per_day",
+        "current_smoker",
+        "regular_alcohol_12m",
+        "diabetes",
+        "kidney_disease",
+        "activity_level"
+    ]
+
+test_list = [50, 1, 23, 1, 95, 10, 1, 1, 1, 1, 2]
+
+test_dict = dict(zip(label, test_list))
+
+input_data = pd.DataFrame([test_dict])
+
+# Entscheidungsschwellenwert
+threshold = 0.4
+# Wahrscheinlichkeit für Hypertonie berechnen
+proba_hypertension = log_model.predict_proba(input_data)[:, 1][0]
+
+
+
+
+
+
+#############################################################
+
+
+
+
+
 st.title("Hypertonie-Screening: Risikoeinschätzung")
 st.header(":hearts: Informationen zur Seite")
 st.write("Die Auswahl dieser Faktoren basiert auf den verfügbaren NHANES-Daten und ihrer fachlichen Relevanz für die Risikoeinschätzung. Die Anwendung dient als Screening-Hinweis und ersetzt keine ärztliche Diagnose oder Blutdruckmessung.")
@@ -46,6 +150,11 @@ st.write("Die Auswahl dieser Faktoren basiert auf den verfügbaren NHANES-Daten 
 st.header("Fragebogen")
 st.subheader("Hier können Sie anhand ihrer Daten ihr Risiko berechnen lassen.")
 st.write("Geben Sie einige Gesundheits- und Lebensstilfaktoren ein. Das Modell schätzt anschließend die Wahrscheinlichkeit für Hypertonie. ")
+
+
+
+#########################################################
+#on changee Funktion
 def Alkoholpegel():
     if st.session_state.alkohol == "Keinen Konsum":
         st.session_state.pumpen = 0
@@ -70,29 +179,50 @@ def spass():
         st.session_state.alkohol = "Hoher Konsum"
 
 
+def update_slider():
+    mapping = {
+        "nicht aktiv": 5,
+        "moderat aktiv": 40,
+        "intensiv aktiv": 70,
+    }
 
-spalte_1, spalte_2, spalte_3 = st.columns([1,1,1])
+def update_selectbox():
+    value = st.session_state.activity_slider
 
+    if value < 15:
+        st.session_state.active = "nicht aktiv"
+    elif value < 60:
+        st.session_state.active = "moderat aktiv"
+    else:
+        st.session_state.active = "intensiv aktiv"
+
+
+################################################################
+person_dict = {}
+
+st.write("#### Körper")
+spalte_1, spalte_2, spalte_3, spalte_4 = st.columns([1,1,1,1])
+st.write("#### Lebensstil")
+spalte_5, spalte_6, spalte_7, spalte_8 = st.columns([1,1,1,1])
+st.write("#### Vorerkrankung")
+spalte_a, spalte_s, spalte_d, spalte_f = st.columns([1,1,1,1])
 with spalte_1:
     alter = st.number_input(
         "Alter",
         key="alter",
         placeholder="Gebe eine Zahl ein ...",
+        value=50,
         min_value = 0,
         max_value = 115,
         step=1
     )
 
-    st.write(f"Alter: {st.session_state.alter}")
+    st.write(f"Alter: {st.session_state.alter} Jahre")
 
-    rauchen = st.selectbox(
-        "Rauchen",
-        ("Ja", "Nein"),
-        placeholder = "Wähle eine Option aus ...",
-        key = "rauchen"
-    )
+    person_dict["age"] = st.session_state.alter
 
-    st.write("You selected:", rauchen)
+
+    
 
 with spalte_2:
     st.session_state.sex = st.selectbox(
@@ -101,10 +231,63 @@ with spalte_2:
         placeholder = "Wähle ein Geschlecht aus ..."
     )
 
-    st.write("You selected:", st.session_state.sex)
+    st.write("Geschlecht:", st.session_state.sex)
+    if st.session_state.sex == "männlich":
+        person_dict["gender"] = 1
+    else:
+        person_dict["gender"] = 2
 
+
+
+with spalte_3:
+    BMI = st.number_input("Body-Mass-Index (BMI)",  
+        key = "BMI",
+        disabled=False,
+        value=20,
+        min_value = 5,
+        max_value = 60,
+        step=1
+    )
+
+    st.write("BMI:", st.session_state.BMI)
+    person_dict["bmi"] = st.session_state.BMI
+
+
+
+with spalte_4:
+    waist = st.number_input(
+        "Taillenumfang (cm)",  
+        key = "waist",
+        disabled=False,
+        value=88,
+        min_value = 20,
+        max_value = 180,
+        step=1)
+
+    st.write("Taillenumfang:", st.session_state.waist, "cm")
+    person_dict["waist_circumference(cm)"] = st.session_state.waist
+
+
+
+with spalte_5:
+    
+    rauchen = st.selectbox(
+        "Aktueller Rauchstatus",
+        ("Ja", "Nein"),
+        placeholder = "Wähle eine Option aus ...",
+        key = "rauchen"
+    )
+    st.write("Rauchen:", rauchen)
+    if rauchen == "Ja":
+        person_dict["current_smoker"] = 1
+    else:
+        person_dict["current_smoker"] = 0
+
+
+
+with spalte_6:
     alkohol = st.selectbox(
-        "Alkoholkonsum",
+        "Alkoholkonsum in den letzten 12 Monate",
         ("Keinen Konsum", "Geringer Konsum", "Mittlerer Konsum", "Hoher Konsum"),
         key = "alkohol",
         on_change = Alkoholpegel
@@ -114,43 +297,153 @@ with spalte_2:
                         key = "pumpen"
                         )
 
-    st.write("You selected:", st.session_state.alkohol, st.session_state.pumpen)
+    st.write("Alkoholkonsum:", st.session_state.alkohol, st.session_state.pumpen)
 
     if st.session_state.pumpen == 0:
         st.write(":milk_glass:")
     else:
         lala = st.session_state.pumpen / 10 + 1
         st.write(int(lala) * ":beer:" )
+    if st.session_state.pumpen > 5:
+        person_dict["regular_alcohol_12m"] = 1
+    else:
+        person_dict["regular_alcohol_12m"] = 1
 
 
-with spalte_3:
-    BMI = st.number_input("BMI", value=None, placeholder="Gebe eine Zahl ein ...",
-                             key = "BMI",
-                             disabled=False)
 
-    st.write("The current number is ", st.session_state.BMI)
+with spalte_7:
+    st.selectbox(
+        "Aktivitätsniveau",
+        ("nicht aktiv", "moderat aktiv", "intensiv aktiv"),
+        key="active",
+        on_change=update_slider
+    )
 
-    st.slider("körperlicher Aktivität", min_value = 0, max_value = 100, value = 100)
+    st.slider(
+        "Körperliche Aktivität",
+        min_value=0,
+        max_value=100,
+        key="activity_slider",
+        on_change=update_selectbox
+    )
+    st.write("Aktivitätsniveau:",st.session_state.activity_slider, st.session_state.active)
+    if st.session_state.active == "nicht aktiv":
+        person_dict["activity_level"] = 0
+    elif st.session_state.active =="moderat aktiv":
+        person_dict["activity_level"] = 1
+    else:
+        person_dict["activity_level"] = 2
 
-st.write("Vorerkrankung")
-check_diabetis = st.checkbox("Diabetis")
-check_niere = st.checkbox("Nierenerkrankung")
-check_chol = st.checkbox("Hohes Cholesterin")
-check_smoke = st.checkbox("Rauchen")
 
-active = st.selectbox(
-        "AKtivitätsniveau",
-        ("nicht aktiv", "moderat aktiv", "intensiv aktiv"))
 
-sit = st.slider("Sitzdauer", min_value = 1, max_value = 24, value = 23,
+with spalte_8:
+    sitting = st.slider("Sitzdauer pro Tag", min_value = 1, max_value = 24, value = 23,
                         key = "sitting"
                         )
+    st.write("Sitzdauer pro Stunde:", st.session_state.sitting)
+    person_dict["sitting_hours_per_day"] = st.session_state.sitting
 
+
+
+
+with spalte_a:
+    with st.container(border=True):
+        check_diabetis = st.checkbox("Diabetis")
+        if check_diabetis:
+            person_dict["diabetes"]=1
+        else:
+            person_dict["diabetes"]=1
+
+
+
+
+with spalte_s:
+    with st.container(border=True):
+        check_niere = st.checkbox("Nierenerkrankung")
+    if check_niere:
+        person_dict["kidney_disease"] = 1
+    else:
+        person_dict["kidney_disease"] = 0
+
+with spalte_d:
+    with st.container(border=True):
+        check_chol = st.checkbox("Hohes Cholesterin")
+    if check_chol:
+        person_dict["high_cholesterol"] = 1
+    else:
+        person_dict["high_cholesterol"] = 0
+
+
+################################################################################
 
 with st.form("my_form"):
-    st.write(st.session_state)
+    form1, form2, form3 = st.columns(3)
+    with form1:
+        st.write(f"Alter: {st.session_state.alter} Jahre")
+        st.write("Geschlecht:", st.session_state.sex)
+        st.write("BMI:", st.session_state.BMI)
+        st.write("Taillenumfang:", st.session_state.waist, "cm")
+    with form2:
+        st.write("Rauchen:", rauchen)
+        st.write("Alkoholkonsum:", st.session_state.alkohol, st.session_state.pumpen)
+        st.write("Aktivitätsniveau:",st.session_state.activity_slider, st.session_state.active)
+        st.write("Sitzdauer pro Stunde:", st.session_state.sitting)
+
     submitted = st.form_submit_button("Submit")
 
+if submitted:
 
+    df_person = pd.DataFrame([person_dict])
 
+    column_order = [
+        "age",
+        "gender",
+        "bmi",
+        "high_cholesterol",
+        "waist_circumference(cm)",
+        "sitting_hours_per_day",
+        "current_smoker",
+        "regular_alcohol_12m",
+        "diabetes",
+        "kidney_disease",
+        "activity_level"
+    ]
 
+    df_person = df_person[column_order]
+
+    # Wahrscheinlichkeit berechnen
+    proba_hypertension = log_model.predict_proba(df_person)[:, 1][0]
+
+    # Eigener Threshold
+    threshold = 0.4
+
+    if proba_hypertension >= threshold:
+        prediction = "Erhöhtes Hypertonie-Risiko"
+        farbe = "red"
+    else:
+        prediction = "Kein erhöhtes Hypertonie-Risiko"
+        farbe = "green"
+
+    st.subheader("Ergebnis")
+
+    st.write("Eingabedaten")
+    st.dataframe(df_person)
+
+    st.write("Wahrscheinlichkeit:", f"{proba_hypertension:.2%}")
+
+    st.write(
+        f"Einschätzung: **{prediction}**"
+    )
+    if st.toggle("sklearn"):
+        st.write(
+            "Einschätzung sklearn:",
+            log_model.predict(df_person)[0]
+        )
+
+if submitted:
+    st.session_state.prediction = prediction
+    st.session_state.proba = proba_hypertension
+
+if "prediction" in st.session_state:
+    st.success(st.session_state.prediction)
+    st.write(f"Wahrscheinlichkeit: {st.session_state.proba:.2%}")

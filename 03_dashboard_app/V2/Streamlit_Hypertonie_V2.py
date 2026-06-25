@@ -52,7 +52,7 @@ else:
 
 
 
-st.subheader(":woman_health_worker: :man_health_worker: Informationen zur App ")
+st.header(":woman_health_worker: :man_health_worker: Informationen zur App ")
 st.write(
     "Diese App dient dazu, das Bewusstsein für die hohe Verbreitung von Hypertonie (Bluthochdruck) zu"
     "stärken und das individuelle Risiko bzw. den Grad einer möglichen Hypertonie einzuschätzen.\n"
@@ -60,7 +60,7 @@ st.write(
     "Zusammenhang mit einem erhöhten Hypertonierisiko zu analysieren."
 )
 st.caption("Im Rahmen dieser Anwendung wird primär die arterielle Hypertonie betrachtet.")
-st.subheader("Was ist Hypertonie?")
+st.header("Was ist Hypertonie?")
 st.write(
     "Die arterielle Hypertonie, oft verkürzt auch Hypertonie (von altgriechisch ὑπέρ hyper ‚über(mäßig)‘"
     "und τείνειν teinein ‚spannen‘),[1] Hypertonus, Hypertension oder im täglichen"
@@ -73,19 +73,43 @@ st.write(
     "\n Quelle : https://www.stiftung-gesundheitswissen.de/hypertonie/allgemeines"
 )
 
-st.subheader("Was sind die Nachteile von Hypertonie?")
-
-st.subheader("Wie ist Diagnose?")
-
+st.header("Wie wird der Blutdruck gemessen?")
+st.write("Der Blutdruck wird in Millimeter Quecksilbersäule, kurz mmHg, gemessen. Dabei sind zwei Werte interessant: der obere oder systolische Wert und der untere, der diastolische Wert.")
 
 
+st.write("Der obere Blutdruckwert wird gemessen, während sich das Herz zusammenzieht und Blut in die Arterien pumpt. Der untere Wert wird gemessen, während sich das Herz entspannt und wieder mit Blut füllt. In der Entspannungsphase strömt kein Blut vom Herzen in die Arterien. Deshalb ist der untere Blutdruckwert auch immer niedriger als der obere.")
 
-st.page_link(
-    "Pages/1_Zeitreihenanalyse.py",
-    label="Zeitreihenanalyse",
-    icon="🏠"
-)
+spalte_m, spalte_k,gff = st.columns([2,4,1])
+with spalte_m:
+    st.image(BASE_DIR  /"Image" /"2023_11_29_Blutdruckmessgerät_v1TS.png.webp")
 
-plumb = st.button(label="page 2")
-if plumb == True:
-    st.page_link("Pages/2_Risikofaktoren.py", label="Page 1", icon="1️⃣")
+with spalte_k:
+    st.write(
+    "Man spricht beim Erwachsenen von Hypertonie, wenn")
+    st.write(
+    "- der obere (systolische) Blutdruck im Ruhezustand bei 140 mmHg oder höher liegt und/oder")
+    st.write(
+    "- der untere (diastolische) Blutdruck im Ruhezustand bei 90 mmHg oder höher liegt.")
+    st.write(
+    "Umgangssprachlich werden bei Blutdruckangaben beide Werte kurz als Verhältnis zusammengefasst. Man sagt zum Beispiel: „Der Blutdruck ist 140 zu 90.“ Zur schriftlichen Dokumentation des Blutdrucks wird in der Regel die Kurzform „140/90 mmHg“ verwendet.")
+
+st.subheader("Wie verläuft Bluthochdruck ohne Behandlung?")
+st.write("Bei Bluthochdruck muss das Herz das Blut mit mehr Anstrengung in die Blutgefäße pumpen. Dies kann negative gesundheitliche Folgen auslösen. Ein dauerhaft erhöhter Blutdruck schädigt die Blutgefäße und fördert das Entstehen von Herz-Kreislauf-Erkrankungen. ")
+spalte_l, spalte_e,gsdfff = st.columns([2,4,1])
+with spalte_l:
+    st.image(BASE_DIR  /"Image" /"Hypertonie_Folgeerkrankungen_online.png.webp")
+
+with spalte_e:
+    st.write("Durch den zu hohen Blutdruck können verschiedene Organe Schaden nehmen. Mögliche Folgen von Hypertonie sind:")
+    st.write("- Herzinfarkte")
+    st.write("- Herzinfarkte")
+    st.write("- Schlaganfall")
+    st.write("- Nierenschwäche")
+    st.write("- Durchblutungsstörungen in den Beinen")
+    st.caption("Die nebenstehende Grafik fasst wesentliche Folgeerkrankungen von Bluthochdruck zusammen. ")
+
+
+ 
+
+
+

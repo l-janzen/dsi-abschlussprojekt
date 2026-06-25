@@ -17,9 +17,9 @@ st.set_page_config(
 
 st.title("Impressum")
 st.header("Herausgeber")
-st.subheader("Mahshid Ghasempour ")
+st.write("#### Mahshid Ghasempour ")
 st.write("Email: Ghasem.mahshid71@gmail.com")
-st.subheader("Ludmila Janzen")
+st.write("#### Ludmila Janzen")
 st.write("Email: ludmila.janzen@tu-dortmund.de")
-st.subheader("Ha Anh Tran")
+st.write("#### Ha Anh Tran")
 st.write("Email: haanhhanoitran@gmail.com")
