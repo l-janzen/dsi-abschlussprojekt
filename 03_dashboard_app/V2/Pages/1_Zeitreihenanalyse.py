@@ -70,7 +70,7 @@ df_stirb = data_stirb.copy()
 
 ################################################################################
 st.title("Entwicklung der Hypertonie-Prävalenz")
-st.subheader(":hearts:")
+st.header(":hearts: Informationen zur Seite")
 st.write(
     "Diese Seite zeigt die zeitliche Entwicklung der Hypertonie-Prävalenz in Deutschland "
     "für Erwachsene im Alter von 30 bis 79 Jahren im Zeitraum 2000 bis 2019. "

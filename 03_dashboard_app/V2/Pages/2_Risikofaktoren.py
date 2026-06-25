@@ -45,32 +45,17 @@ df_nh = data_nhanes.copy()
 
 
 
-###################################################
-
-
-##Data loading
-@st.cache_data
-def load_data():
-    data_path = BASE_DIR / "02_ml_analysis" / "notebooks" / "nhanes_cleand.csv"
-    return  pd.read_csv(data_path
-    )
-
-data_nhanes = load_data()
-df_nh = data_nhanes.copy()
-
-
-
 
 
 
 ##############
 #Titel
-st.title("Was fördert Hypertonie?")
+st.title("Was sind die wichtigsten Risikofaktoren bei Hypertonie?")
+st.header(":hearts: Informationen zur Seite")
+
+st.write("Berücksichtigt werden unter anderem Alter, Geschlecht, Körpergewicht, Körpergröße, BMI, Taillenumfang, Raucherstatus, Alkoholkonsum, körperliche Aktivität, Sitzzeit sowie bestehende Vorerkrankungen wie Diabetes, chronische Nierenerkrankung und erhöhter Cholesterinstatus.")
 
 
-st.write("hallo")
-
-st.write(":hearts:")
 
 ##################################################################
 #Anfang der Körper
@@ -619,13 +604,4 @@ with disease_col:
 if st.toggle("Dataframe(Vorerkrankung) anzeigen"):
     st.dataframe(condition_summary)
 
-
-
-st.write("hallo")
-
-st.write(":hearts:")
-
-
-
-st.header("Was kann dagegen gemacht werden?")
 
