@@ -43,67 +43,76 @@ st.set_page_config(
 
 #################################
 #Daten werden geladen
-@st.cache_data
-def load_data():
-    data_path = BASE_DIR / "02_ml_analysis" / "notebooks" / "nhanes_cleand.csv"
-    return  pd.read_csv(data_path
+#@st.cache_data
+#def load_data():
+#    data_path = BASE_DIR / "02_ml_analysis" / "notebooks" / "nhanes_cleand.csv"
+#    return  pd.read_csv(data_path
+#    )
+
+#data_nhanes = load_data()
+#df = data_nhanes.copy()
+
+#df['gender'] = df['gender'].replace({
+#    'Male' : '1',
+#    'Female' : '2'
+#})
+
+#df['gender'] = pd.to_numeric(df['gender'], errors= 'coerce')
+
+@st.cache_resource
+def load_model():
+    return joblib.load("log_model.pkl")
+
+try:
+    log_model = load_model()
+except FileNotFoundError:
+    # Nur wenn kein Modell vorhanden ist, trainieren
+    ############################################
+    #Hier fängt der ML teil an
+
+    #feature and target
+    #features 
+    X = df[
+        [
+            "age",
+            "gender",
+            "bmi",
+            "high_cholesterol",
+            "waist_circumference(cm)",
+            "sitting_hours_per_day",
+            "current_smoker",
+            "regular_alcohol_12m",
+            "diabetes",
+            "kidney_disease",
+            "activity_level"
+            
+        ]
+    ]
+
+
+    #Target 
+    y = df["hypertension"]
+
+
+    # Train-Test-Split 
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42,
+        stratify=y
     )
 
-data_nhanes = load_data()
-df = data_nhanes.copy()
+    #Modelltraining  nach Klasse logistische Regression 
+    # daten standardisiert
+    log_model = Pipeline ([
+        ('scaler', StandardScaler()),
+        ('model', LogisticRegression(max_iter= 1000,
+                                    class_weight= 'balanced'))
+    ])
 
-df['gender'] = df['gender'].replace({
-    'Male' : '1',
-    'Female' : '2'
-})
-
-df['gender'] = pd.to_numeric(df['gender'], errors= 'coerce')
-############################################
-#Hier fängt der ML teil an
-
-#feature and target
-#features 
-X = df[
-    [
-        "age",
-        "gender",
-        "bmi",
-        "high_cholesterol",
-        "waist_circumference(cm)",
-        "sitting_hours_per_day",
-        "current_smoker",
-        "regular_alcohol_12m",
-        "diabetes",
-        "kidney_disease",
-        "activity_level"
-        
-    ]
-]
-
-
-#Target 
-y = df["hypertension"]
-
-
-# Train-Test-Split 
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42,
-    stratify=y
-)
-
-#Modelltraining  nach Klasse logistische Regression 
-# daten standardisiert
-log_model = Pipeline ([
-    ('scaler', StandardScaler()),
-    ('model', LogisticRegression(max_iter= 1000,
-                                 class_weight= 'balanced'))
-])
-
-#model trainieren 
-log_model.fit(X_train, y_train)
+    #model trainieren 
+    log_model.fit(X_train, y_train)
 
 
 label = [
