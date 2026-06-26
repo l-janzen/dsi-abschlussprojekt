@@ -66,6 +66,21 @@ def load_model():
 try:
     log_model = load_model()
 except FileNotFoundError:
+    #Daten werden geladen
+    @st.cache_data
+    def load_data():
+        data_path = BASE_DIR / "02_ml_analysis" / "notebooks" / "nhanes_cleand.csv"
+        return  pd.read_csv(data_path
+        )
+    data_nhanes = load_data()
+    df = data_nhanes.copy()
+
+    df['gender'] = df['gender'].replace({
+        'Male' : '1',
+        'Female' : '2'
+    })
+
+    df['gender'] = pd.to_numeric(df['gender'], errors= 'coerce')
     # Nur wenn kein Modell vorhanden ist, trainieren
     ############################################
     #Hier fängt der ML teil an
